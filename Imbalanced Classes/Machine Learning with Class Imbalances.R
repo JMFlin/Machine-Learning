@@ -140,10 +140,23 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]), Model='Random Forest')
+
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val <- data.frame(normal = max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]])))
+
+#K-S or Kolmogorov-Smirnov chart measures performance of classification models. 
+#More accurately, K-S is a measure of the degree of separation between the positive and negative distributions. 
+#The K-S is 100, if the scores partition the population into two separate groups in which one group contains all the positives and the other all the negatives.
+
+#On the other hand, If the model cannot differentiate between positives and negatives, 
+#then it is as if the model selects cases randomly from the population. 
+#The K-S would be 0. In most classification models the K-S will fall between 0 and 100, 
+#and that the higher the value the better the model is at separating the positive from negative cases.
+
 
 ## Slide 59 "Down-Sampling - EMR Data"
 
@@ -177,18 +190,14 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-#K-S or Kolmogorov-Smirnov chart measures performance of classification models. 
-#More accurately, K-S is a measure of the degree of separation between the positive and negative distributions. 
-#The K-S is 100, if the scores partition the population into two separate groups in which one group contains all the positives and the other all the negatives.
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Down-Sampling'))
 
-#On the other hand, If the model cannot differentiate between positives and negatives, 
-#then it is as if the model selects cases randomly from the population. 
-#The K-S would be 0. In most classification models the K-S will fall between 0 and 100, 
-#and that the higher the value the better the model is at separating the positive from negative cases.
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val$down <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
 
 ## Slide 63 "Internal Down-Sampling - EMR Data"
 
@@ -225,10 +234,13 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Internal Down-Sampling'))
+
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val$down_int <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 67 "Up-Sampling - EMR Data"
 
@@ -264,10 +276,13 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Up-Sampling'))
+
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val$up <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 73 "SMOTE - EMR Data"
 
@@ -303,10 +318,13 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n SMOTE'))
+
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val$smote <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ##"ROSE - EMR Data"
 
@@ -314,16 +332,16 @@ rose_ctrl <- ctrl
 rose_ctrl$sampling <- "rose"
 set.seed(1537)
 rf_emr_rose <- train(Class ~ ., 
-                      data = emr_train,
-                      method = "rf",
-                      tuneGrid = emr_grid,
-                      ntree = 1000,
-                      metric = "ROC",
-                      trControl = rose_ctrl)
+                     data = emr_train,
+                     method = "rf",
+                     tuneGrid = emr_grid,
+                     ntree = 1000,
+                     metric = "ROC",
+                     trControl = rose_ctrl)
 
 #Confusion matrix and associated statistics for model fit:
 
-rfClasses_smote <- predict(rf_emr_rose, emr_test)
+rfClasses_rose <- predict(rf_emr_rose, emr_test)
 confusionMatrix(data = rfClasses_rose, emr_test$Class)
 postResample(rfClasses_rose, emr_test$Class)
 sensitivity(rfClasses_rose, emr_test$Class)
@@ -342,10 +360,13 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
-d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
-d 
-max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n ROSE'))
+
+d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+ks.val$rose <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 75 "SMOTE - EMR Data"
 
@@ -358,11 +379,11 @@ emr_test_pred$smote <- predict(rf_emr_smote, emr_test, type = "prob")[, "event"]
 emr_test_pred$rose <- predict(rf_emr_rose, emr_test, type = "prob")[, "event"]
 
 get_auc <- function(pred, ref){
-  auc(roc(ref, pred, levels = rev(levels(ref))))
+    auc(roc(ref, pred, levels = rev(levels(ref))))
 }
 
 apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)
-
+ks.val#It is the maximum difference between the cumulative true positive rate and the cumulative false positive rate
 
 resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf_emr_down_int,
                           up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
@@ -397,12 +418,12 @@ mean(okc_test$Class == "stem")
 ## Slide 81 "CART and Costs - OkC Data"
 
 fourStats <- function (data, lev = levels(data$obs), model = NULL) {
-  accKapp <- postResample(data[, "pred"], data[, "obs"])
-  out <- c(accKapp,
-           sensitivity(data[, "pred"], data[, "obs"], lev[1]),
-           specificity(data[, "pred"], data[, "obs"], lev[2]))
-  names(out)[3:4] <- c("Sens", "Spec")
-  out
+    accKapp <- postResample(data[, "pred"], data[, "obs"])
+    out <- c(accKapp,
+             sensitivity(data[, "pred"], data[, "obs"], lev[1]),
+             specificity(data[, "pred"], data[, "obs"], lev[2]))
+    names(out)[3:4] <- c("Sens", "Spec")
+    out
 }
 
 ctrl_cost <- trainControl(method = "repeatedcv",
@@ -433,22 +454,22 @@ rpart_costs <- train(x = okc_train[, names(okc_train) != "Class"],
 ## Slide 84 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs) + 
-  scale_x_log10() + 
-  theme(legend.position = "top")
+    scale_x_log10() + 
+    theme(legend.position = "top")
 
 
 ## Slide 85 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Sens") + 
-  scale_x_log10() + 
-  theme(legend.position = "top")
+    scale_x_log10() + 
+    theme(legend.position = "top")
 
 
 ## Slide 86 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Spec") + 
-  scale_x_log10() + 
-  theme(legend.position = "top")
+    scale_x_log10() + 
+    theme(legend.position = "top")
 
 
 ## Slide 87 "C5.0 and Costs - OkC Data"
@@ -501,42 +522,42 @@ table(pred_1, pred_2)
 ## across the hold-outs to get an averaged ROC curve
 
 roc_train <- function(object, best_only = TRUE, ...) {
-  
-  
-  lvs <- object$modelInfo$levels(object$finalModel)
-  
-  if(best_only) {
-    object$pred <- merge(object$pred, object$bestTune)
-  }
-  
-  ## find tuning parameter names
-  p_names <- as.character(object$modelInfo$parameters$parameter)
-  p_combos <- object$pred[, p_names, drop = FALSE]
-  
-  ## average probabilities across resamples
-  object$pred <- ddply(.data = object$pred, #plyr::
-                       .variables = c("obs", "rowIndex", p_names),
-                       .fun = function(dat, lvls = lvs) {
-                         out <- mean(dat[, lvls[1]])
-                         names(out) <- lvls[1]
-                         out
-                       })
-  
-  make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
-    out <- roc(response = x$obs,#pROC::
-               predictor = x[, lvls[1]],
-               levels = rev(lvls))
     
-    out$model_param <- x[1,nms,drop = FALSE]
+    
+    lvs <- object$modelInfo$levels(object$finalModel)
+    
+    if(best_only) {
+        object$pred <- merge(object$pred, object$bestTune)
+    }
+    
+    ## find tuning parameter names
+    p_names <- as.character(object$modelInfo$parameters$parameter)
+    p_combos <- object$pred[, p_names, drop = FALSE]
+    
+    ## average probabilities across resamples
+    object$pred <- ddply(.data = object$pred, #plyr::
+                         .variables = c("obs", "rowIndex", p_names),
+                         .fun = function(dat, lvls = lvs) {
+                             out <- mean(dat[, lvls[1]])
+                             names(out) <- lvls[1]
+                             out
+                         })
+    
+    make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
+        out <- roc(response = x$obs,#pROC::
+                   predictor = x[, lvls[1]],
+                   levels = rev(lvls))
+        
+        out$model_param <- x[1,nms,drop = FALSE]
+        out
+    }
+    out <- plyr::dlply(.data = object$pred, 
+                       .variables = p_names,
+                       .fun = make_roc,
+                       lvls = lvs,
+                       nms = p_names)
+    if(length(out) == 1)  out <- out[[1]]
     out
-  }
-  out <- plyr::dlply(.data = object$pred, 
-                     .variables = p_names,
-                     .fun = make_roc,
-                     lvls = lvs,
-                     nms = p_names)
-  if(length(out) == 1)  out <- out[[1]]
-  out
 }
 
 plot(roc_train(rf_emr_mod), 
