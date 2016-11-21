@@ -140,7 +140,10 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 59 "Down-Sampling - EMR Data"
 
@@ -174,6 +177,10 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 
 ## Slide 63 "Internal Down-Sampling - EMR Data"
@@ -211,6 +218,10 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 67 "Up-Sampling - EMR Data"
 
@@ -246,6 +257,10 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 73 "SMOTE - EMR Data"
 
@@ -281,6 +296,11 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
 ##"ROSE - EMR Data"
 
 rose_ctrl <- ctrl
@@ -315,6 +335,10 @@ q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
+d 
+max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 ## Slide 75 "SMOTE - EMR Data"
 
