@@ -15,6 +15,21 @@
 #Measuring performance with imbalances
 #Sampling methods for combating class imblanaces
 
+#In classification problems, a disparity in the frequencies of the observed classes can have a significant negative impact on model fitting. 
+#One technique for resolving such a class imbalance is to subsample the training data in a manner that mitigates the issues. 
+#Examples of sampling methods for this purpose are:
+
+#down-sampling: randomly subset all the classes in the training set so that their class frequencies match the least prevalent class. 
+#For example, suppose that 80% of the training set samples are the first class and the remaining 20% are in the second class. 
+
+#Down-sampling would randomly sample the first class to be the same size as the second class (so that only 40% of the total training set is used to fit the model). 
+#caret contains a function (downSample) to do this.
+
+#up-sampling: randomly sample (with replacement) the minority class to be the same size as the majority class. caret contains a function (upSample) to do this.
+
+#hybrid methods: techniques such as SMOTE and ROSE down-sample the majority class and synthesize new data points in the minority class.
+#SMOTE (Synthetic minority over-sampling technique) nearst neighbors
+#ROSE (Randomly over-sampling examples) kernel density
 
 library(AppliedPredictiveModeling)
 library(ggplot2)
@@ -73,10 +88,11 @@ plot(as.party(rp3))
 
 ## on Windows, try the doParallel package
 ## **if** your computer has multiple cores and sufficient memory
+#cmd -> WMIC CPU Get DeviceID,NumberOfCores,NumberOfLogicalProcessors
 
-ctrl <- trainControl(method = "cv",
-                     repeats = 10, 
-                     classProbs = TRUE,
+ctrl <- trainControl(method = "repeatedcv",#cv
+                     repeats = 1, # this does 1 repeats of 10-fold corss validation
+                     classProbs = TRUE,#used to calculate the area under ROC, sensitivity and specificity. Only for 2 class problems.
                      savePredictions = TRUE,
                      summaryFunction = twoClassSummary)
 emr_grid <- data.frame(mtry = c(2,5))#c(1:15, (4:9)*5)
@@ -85,74 +101,45 @@ set.seed(1537)
 rf_emr_mod <- train(Class ~ ., 
                     data = emr_train,
                     method = "rf",
-                    metric = "ROC",
+                    metric = "ROC",#evaluation is done with Area Under Curve
                     tuneGrid = emr_grid,
                     ntree = 1000,
                     trControl = ctrl)
+
+#Confusion matrix and associated statistics for model fit:
+
+rfClasses <- predict(rf_emr_mod, emr_test)
+
+sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result?
+specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a negative result?
+
+confusionMatrix(data = rfClasses, emr_test$Class)
+postResample(rfClasses, emr_test$Class)
+#The "no--information rate" is the largest proportion of the observed classes (there were more actives than inactives in this test set).
+#A hypothesis test is also computed to evaluate whether the overall accuracy rate is greater than the rate of the largest class. 
+#Also, the prevalence of the "positive event" is computed from the data (unless passed in as an argument), 
+#the detection rate (the rate of true events also predicted to be events) and the detection prevalence 
+#(the prevalence of predicted events). 
+#Fore more: http://topepo.github.io/caret/other.html
 
 
 ## Slide 50 "Random Forest Results - EMR Example"
 
 ggplot(rf_emr_mod)
 
+#ROC for Random Forest
 
+pred <- prediction(rf_emr_mod$pred$noevent, rf_emr_mod$pred$obs)
 
-## Slide 51 "Approximate Random Forest Resampled ROC Curve"
+perf <- performance(pred, "tpr", "fpr")
 
-## This function averages the class probability values per sample
-## across the hold-outs to get an averaged ROC curve
+roc.data <- data.frame(Model='Random Forest',x=perf@x.values[[1]], y=perf@y.values[[1]])
 
-roc_train <- function(object, best_only = TRUE, ...) {
-    
-    
-    lvs <- object$modelInfo$levels(object$finalModel)
-    
-    if(best_only) {
-        object$pred <- merge(object$pred, object$bestTune)
-    }
-    
-    ## find tuning parameter names
-    p_names <- as.character(object$modelInfo$parameters$parameter)
-    p_combos <- object$pred[, p_names, drop = FALSE]
-    
-    ## average probabilities across resamples
-    object$pred <- ddply(.data = object$pred, #plyr::
-                               .variables = c("obs", "rowIndex", p_names),
-                               .fun = function(dat, lvls = lvs) {
-                                   out <- mean(dat[, lvls[1]])
-                                   names(out) <- lvls[1]
-                                   out
-                               })
-    
-    make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
-        out <- roc(response = x$obs,#pROC::
-                         predictor = x[, lvls[1]],
-                         levels = rev(lvls))
-        
-        out$model_param <- x[1,nms,drop = FALSE]
-        out
-    }
-    out <- plyr::dlply(.data = object$pred, 
-                       .variables = p_names,
-                       .fun = make_roc,
-                       lvls = lvs,
-                       nms = p_names)
-    if(length(out) == 1)  out <- out[[1]]
-    out
-}
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-plot(roc_train(rf_emr_mod), 
-     legacy.axes = TRUE,
-     print.thres = .5,
-     print.thres.pattern="   <- default %.1f threshold")
-
-
-## Slide 52 "A Better Cutoff"
-
-plot(roc_train(rf_emr_mod), 
-     legacy.axes = TRUE,
-     print.thres.pattern = "Cutoff: %.2f (Sp = %.2f, Sn = %.2f)",
-     print.thres = "best")
 
 
 ## Slide 59 "Down-Sampling - EMR Data"
@@ -163,23 +150,30 @@ set.seed(1537)
 rf_emr_down <- train(Class ~ ., 
                      data = emr_train,
                      method = "rf",
-                     metric = "ROC",
+                     metric = "ROC",#evaluation is done with Area Under Curve
                      tuneGrid = emr_grid,
                      ntree = 1000,
                      trControl = down_ctrl)
 
+rfClasses_down <- predict(rf_emr_down, emr_test)
+confusionMatrix(data = rfClasses_down, emr_test$Class)
+postResample(rfClasses_down, emr_test$Class)
+sensitivity(rfClasses_down, emr_test$Class)
 
 ## Slide 60 "Down-Sampling - EMR Data"
 
 ggplot(rf_emr_down)
+pred <- prediction(rf_emr_down$pred$noevent, rf_emr_down$pred$obs)
 
+perf <- performance(pred, "tpr", "fpr")
 
-## Slide 61 "Approximate Resampled ROC Curve with Down-Sampling"
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
 
-plot(roc_train(rf_emr_down), 
-     legacy.axes = TRUE,
-     print.thres = .5,
-     print.thres.pattern="   <- default %.1f threshold")
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
 
 
 ## Slide 63 "Internal Down-Sampling - EMR Data"
@@ -196,10 +190,26 @@ rf_emr_down_int <- train(Class ~ .,
                          strata = emr_train$Class,
                          sampsize = rep(sum(emr_train$Class == "event"), 2))
 
+#Confusion matrix and associated statistics for model fit:
+
+rfClasses_down_int <- predict(rf_emr_down_int, emr_test)
+confusionMatrix(data = rfClasses_down_int, emr_test$Class)
+postResample(rfClasses_down_int, emr_test$Class)
+sensitivity(rfClasses_down_int, emr_test$Class)
 
 ## Slide 64 "Internal Down-Sampling - EMR Data"
 
 ggplot(rf_emr_down_int)
+pred <- prediction(rf_emr_down_int$pred$noevent, rf_emr_down_int$pred$obs)
+
+perf <- performance(pred, "tpr", "fpr")
+
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 ## Slide 67 "Up-Sampling - EMR Data"
@@ -215,10 +225,26 @@ rf_emr_up <- train(Class ~ .,
                    metric = "ROC",
                    trControl = up_ctrl)
 
+#Confusion matrix and associated statistics for model fit:
+
+rfClasses_up <- predict(rf_emr_up, emr_test)
+confusionMatrix(data = rfClasses_up, emr_test$Class)
+postResample(rfClasses_up, emr_test$Class)
+sensitivity(rfClasses_up, emr_test$Class)
 
 ## Slide 68 "Up-Sampling - EMR Data"
 
 ggplot(rf_emr_up)
+pred <- prediction(rf_emr_up$pred$noevent, rf_emr_up$pred$obs)
+
+perf <- performance(pred, "tpr", "fpr")
+
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 ## Slide 73 "SMOTE - EMR Data"
@@ -234,10 +260,60 @@ rf_emr_smote <- train(Class ~ .,
                       metric = "ROC",
                       trControl = smote_ctrl)
 
+#Confusion matrix and associated statistics for model fit:
+
+rfClasses_smote <- predict(rf_emr_smote, emr_test)
+confusionMatrix(data = rfClasses_smote, emr_test$Class)
+postResample(rfClasses_smote, emr_test$Class)
+sensitivity(rfClasses_smote, emr_test$Class)
 
 ## Slide 74 "SMOTE - EMR Data"
 
 ggplot(rf_emr_smote)
+pred <- prediction(rf_emr_smote$pred$noevent, rf_emr_smote$pred$obs)
+
+perf <- performance(pred, "tpr", "fpr")
+
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+##"ROSE - EMR Data"
+
+rose_ctrl <- ctrl
+rose_ctrl$sampling <- "rose"
+set.seed(1537)
+rf_emr_rose <- train(Class ~ ., 
+                      data = emr_train,
+                      method = "rf",
+                      tuneGrid = emr_grid,
+                      ntree = 1000,
+                      metric = "ROC",
+                      trControl = rose_ctrl)
+
+#Confusion matrix and associated statistics for model fit:
+
+rfClasses_smote <- predict(rf_emr_rose, emr_test)
+confusionMatrix(data = rfClasses_rose, emr_test$Class)
+postResample(rfClasses_rose, emr_test$Class)
+sensitivity(rfClasses_rose, emr_test$Class)
+
+##"ROSE - EMR Data"
+
+ggplot(rf_emr_rose)
+pred <- prediction(rf_emr_rose$pred$noevent, rf_emr_rose$pred$obs)
+
+perf <- performance(pred, "tpr", "fpr")
+
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+
+q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 ## Slide 75 "SMOTE - EMR Data"
@@ -248,12 +324,19 @@ emr_test_pred$down <- predict(rf_emr_down, emr_test, type = "prob")[, "event"]
 emr_test_pred$down_int <- predict(rf_emr_down_int, emr_test, type = "prob")[, "event"]
 emr_test_pred$up <- predict(rf_emr_up, emr_test, type = "prob")[, "event"]
 emr_test_pred$smote <- predict(rf_emr_smote, emr_test, type = "prob")[, "event"]
+emr_test_pred$rose <- predict(rf_emr_rose, emr_test, type = "prob")[, "event"]
 
 get_auc <- function(pred, ref){
-    auc(roc(ref, pred, levels = rev(levels(ref))))
+  auc(roc(ref, pred, levels = rev(levels(ref))))
 }
 
 apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)
+
+
+resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf_emr_down_int,
+                          up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
+summary(resamps)
+
 
 ###################################################################
 
@@ -261,7 +344,7 @@ apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)
 
 load("okc.RData") ## create this using the file "okc_data.R"
 str(okc, list.len = 20, vec.len = 2)
-
+okc <- okc[sample(nrow(okc), size = 500, replace = FALSE),]#making the dataset smaller so it runs faster
 
 ## Slide 26 "Example Data - OKCupid"
 
@@ -278,12 +361,12 @@ mean(okc_test$Class == "stem")
 ## Slide 81 "CART and Costs - OkC Data"
 
 fourStats <- function (data, lev = levels(data$obs), model = NULL) {
-    accKapp <- postResample(data[, "pred"], data[, "obs"])
-    out <- c(accKapp,
-             sensitivity(data[, "pred"], data[, "obs"], lev[1]),
-             specificity(data[, "pred"], data[, "obs"], lev[2]))
-    names(out)[3:4] <- c("Sens", "Spec")
-    out
+  accKapp <- postResample(data[, "pred"], data[, "obs"])
+  out <- c(accKapp,
+           sensitivity(data[, "pred"], data[, "obs"], lev[1]),
+           specificity(data[, "pred"], data[, "obs"], lev[2]))
+  names(out)[3:4] <- c("Sens", "Spec")
+  out
 }
 
 ctrl_cost <- trainControl(method = "repeatedcv",
@@ -300,8 +383,7 @@ rpart_init <- rpart(Class ~ ., data = okc_train, cp = 0)$cptable
 cost_grid <- expand.grid(cp = rpart_init[, "CP"], Cost = 1:5)
 
 ## Use the non-formula method. Many of the predictors are factors and
-## this will preserve the factor encoding instead of using dummy 
-## variables. 
+## this will preserve the factor encoding instead of using dummy variables. 
 
 set.seed(1537)
 rpart_costs <- train(x = okc_train[, names(okc_train) != "Class"],
@@ -315,29 +397,29 @@ rpart_costs <- train(x = okc_train[, names(okc_train) != "Class"],
 ## Slide 84 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs) + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 85 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Sens") + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 86 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Spec") + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 87 "C5.0 and Costs - OkC Data"
 
-cost_grid <- expand.grid(trials = c(1:10, 20, 30),
+cost_grid <- expand.grid(trials = c(10, 20, 30),#c(1:10, 20, 30)
                          winnow = FALSE, model = "tree",
-                         cost = c(1, 5, 10, 15))
+                         cost = c(1, 5))#cost = c(1, 5, 10, 15)
 set.seed(1537)
 c5_costs <- train(x = okc_train[, names(okc_train) != "Class"],
                   y = okc_train$Class,
@@ -345,7 +427,6 @@ c5_costs <- train(x = okc_train[, names(okc_train) != "Class"],
                   tuneGrid = cost_grid,
                   metric = "Kappa",
                   trControl = ctrl_cost)
-
 
 ## Slide 89 "C5.0 and Costs - OkC Data"
 
@@ -374,3 +455,63 @@ pred_2 <- ifelse(predict(rp_mod, okc_test)[, "stem"] >= .5, "stem", "other")
 pred_2 <- factor(pred_2, levels = levels(pred_1))
 
 table(pred_1, pred_2)
+
+
+###################################################################
+
+## Slide 51 "Approximate Random Forest Resampled ROC Curve"
+
+## This function averages the class probability values per sample
+## across the hold-outs to get an averaged ROC curve
+
+roc_train <- function(object, best_only = TRUE, ...) {
+  
+  
+  lvs <- object$modelInfo$levels(object$finalModel)
+  
+  if(best_only) {
+    object$pred <- merge(object$pred, object$bestTune)
+  }
+  
+  ## find tuning parameter names
+  p_names <- as.character(object$modelInfo$parameters$parameter)
+  p_combos <- object$pred[, p_names, drop = FALSE]
+  
+  ## average probabilities across resamples
+  object$pred <- ddply(.data = object$pred, #plyr::
+                       .variables = c("obs", "rowIndex", p_names),
+                       .fun = function(dat, lvls = lvs) {
+                         out <- mean(dat[, lvls[1]])
+                         names(out) <- lvls[1]
+                         out
+                       })
+  
+  make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
+    out <- roc(response = x$obs,#pROC::
+               predictor = x[, lvls[1]],
+               levels = rev(lvls))
+    
+    out$model_param <- x[1,nms,drop = FALSE]
+    out
+  }
+  out <- plyr::dlply(.data = object$pred, 
+                     .variables = p_names,
+                     .fun = make_roc,
+                     lvls = lvs,
+                     nms = p_names)
+  if(length(out) == 1)  out <- out[[1]]
+  out
+}
+
+plot(roc_train(rf_emr_mod), 
+     legacy.axes = TRUE,
+     print.thres = .5,
+     print.thres.pattern="   <- default %.1f threshold")
+
+
+## Slide 52 "A Better Cutoff"
+
+plot(roc_train(rf_emr_mod), 
+     legacy.axes = TRUE,
+     print.thres.pattern = "Cutoff: %.2f (Sp = %.2f, Sn = %.2f)",
+     print.thres = "best")
