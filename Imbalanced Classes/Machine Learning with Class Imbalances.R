@@ -181,7 +181,14 @@ ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 d <- ggplot(ks, aes(seq_along(ks[,1]), ks[,1])) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
 d 
 max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+#K-S or Kolmogorov-Smirnov chart measures performance of classification models. 
+#More accurately, K-S is a measure of the degree of separation between the positive and negative distributions. 
+#The K-S is 100, if the scores partition the population into two separate groups in which one group contains all the positives and the other all the negatives.
 
+#On the other hand, If the model cannot differentiate between positives and negatives, 
+#then it is as if the model selects cases randomly from the population. 
+#The K-S would be 0. In most classification models the K-S will fall between 0 and 100, 
+#and that the higher the value the better the model is at separating the positive from negative cases.
 
 ## Slide 63 "Internal Down-Sampling - EMR Data"
 
