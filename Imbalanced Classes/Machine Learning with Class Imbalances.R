@@ -337,6 +337,11 @@ resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf
                           up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
 summary(resamps)
 
+trellis.par.set(caretTheme())
+# boxplots of results
+bwplot(resamps)
+# dot plots of results
+dotplot(resamps)
 
 ###################################################################
 
