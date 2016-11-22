@@ -173,8 +173,7 @@ perf.data <- data.frame(Model='Random Forest',x=RP.perf@x.values[[1]], y=RP.perf
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 #If your question is: "How meaningful is a positive result from my classifier given the baseline probabilities of my problem?", use a PR curve. 
 #If your question is: "How well can this classifier be expected to perform in general, at a variety of different baseline probabilities?", go with a ROC curve.
 
@@ -235,8 +234,7 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Down-Sampling',x
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 
@@ -299,8 +297,7 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Internal Down-Sa
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 
@@ -361,8 +358,7 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Up-Sampling',x=R
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 ## Slide 73 "SMOTE - EMR Data"
@@ -422,8 +418,7 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n SMOTE',x=RP.perf
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 ##"ROSE - EMR Data"
@@ -483,8 +478,7 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n ROSE',x=RP.perf@
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
-  coord_cartesian(ylim = c(0.5, 1)) 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 
 ## Slide 75 "SMOTE - EMR Data"
