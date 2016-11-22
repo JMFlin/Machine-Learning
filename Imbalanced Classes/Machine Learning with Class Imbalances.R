@@ -110,44 +110,52 @@ rf_emr_mod <- train(Class ~ .,
 
 rfClasses <- predict(rf_emr_mod, emr_test)
 
-sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result?
-specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a negative result?
+sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result? True positive
+specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a negative result? True negative
 
 confusionMatrix(data = rfClasses, emr_test$Class)
-postResample(rfClasses, emr_test$Class)
-#The "no--information rate" is the largest proportion of the observed classes (there were more actives than inactives in this test set).
-#A hypothesis test is also computed to evaluate whether the overall accuracy rate is greater than the rate of the largest class. 
+#The "no--information rate" is the largest proportion of the observed classes.
+#A hypothesis test is also computed to evaluate whether the overall accuracy rate is greater than the rate of the largest class.
 #Also, the prevalence of the "positive event" is computed from the data (unless passed in as an argument), 
-#the detection rate (the rate of true events also predicted to be events) and the detection prevalence 
-#(the prevalence of predicted events). 
-#Fore more: http://topepo.github.io/caret/other.html
+#the detection rate (the rate of true events also predicted to be events) and the detection prevalence (the prevalence of predicted events). 
+#https://topepo.github.io/caret/measuring-performance.html
 
+postResample(rfClasses, emr_test$Class)
+#The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance).
+#Landis and Koch considers 0-0.20 as slight, 0.21-0.40 as fair, 0.41-0.60 as moderate, 0.61-0.80 as substantial, and 0.81-1 as almost perfect. 
+#Fleiss considers kappas > 0.75 as excellent, 0.40-0.75 as fair to good, and < 0.40 as poor.
 
 ## Slide 50 "Random Forest Results - EMR Example"
 
 ggplot(rf_emr_mod)
 
-#ROC for Random Forest
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_mod, emr_test,type="prob")
 
-pred <- prediction(rf_emr_mod$pred$noevent, rf_emr_mod$pred$obs)
+rf.ROC <- roc(predictor=rf.probs$event,
+              response=emr_test$Class,
+              levels=rev(levels(emr_test$Class)))
 
-perf <- performance(pred, "tpr", "fpr")
+roc.data <- data.frame(Model='Random Forest',y=rf.ROC$sensitivities, x=1-rf.ROC$specificities)
 
-roc.data <- data.frame(Model='Random Forest',x=perf@x.values[[1]], y=perf@y.values[[1]])
-
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+
+#KS
+
+pred <- prediction(rf_emr_mod$pred$noevent, rf_emr_mod$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
 
 ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]), Model='Random Forest')
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
 d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
-           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val <- data.frame(normal = max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]])))
-
 #K-S or Kolmogorov-Smirnov chart measures performance of classification models. 
 #More accurately, K-S is a measure of the degree of separation between the positive and negative distributions. 
 #The K-S is 100, if the scores partition the population into two separate groups in which one group contains all the positives and the other all the negatives.
@@ -156,6 +164,19 @@ ks.val <- data.frame(normal = max(attr(perf, "y.values")[[1]] - (attr(perf, "x.v
 #then it is as if the model selects cases randomly from the population. 
 #The K-S would be 0. In most classification models the K-S will fall between 0 and 100, 
 #and that the higher the value the better the model is at separating the positive from negative cases.
+
+# Recall-Precision curve (Also known as Lift Chart) 
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- data.frame(Model='Random Forest',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]])
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+#If your question is: "How meaningful is a positive result from my classifier given the baseline probabilities of my problem?", use a PR curve. 
+#If your question is: "How well can this classifier be expected to perform in general, at a variety of different baseline probabilities?", go with a ROC curve.
 
 
 ## Slide 59 "Down-Sampling - EMR Data"
@@ -179,17 +200,25 @@ sensitivity(rfClasses_down, emr_test$Class)
 ## Slide 60 "Down-Sampling - EMR Data"
 
 ggplot(rf_emr_down)
-pred <- prediction(rf_emr_down$pred$noevent, rf_emr_down$pred$obs)
 
-perf <- performance(pred, "tpr", "fpr")
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_down, emr_test,type="prob")
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+rf.ROC <- roc(predictor=rf.probs$event,
+              response=emr_test$Class,
+              levels=rev(levels(emr_test$Class)))
 
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+
+#KS
+pred <- prediction(rf_emr_down$pred$noevent, rf_emr_down$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Down-Sampling'))
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
@@ -197,6 +226,18 @@ d + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val$down <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
+# Recall-Precision curve             
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Down-Sampling',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+
 
 
 ## Slide 63 "Internal Down-Sampling - EMR Data"
@@ -223,17 +264,25 @@ sensitivity(rfClasses_down_int, emr_test$Class)
 ## Slide 64 "Internal Down-Sampling - EMR Data"
 
 ggplot(rf_emr_down_int)
-pred <- prediction(rf_emr_down_int$pred$noevent, rf_emr_down_int$pred$obs)
 
-perf <- performance(pred, "tpr", "fpr")
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_down_int, emr_test,type="prob")
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+rf.ROC <- roc(predictor=rf.probs$event,
+              response=emr_test$Class,
+              levels=rev(levels(emr_test$Class)))
 
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+
+#KS
+pred <- prediction(rf_emr_down_int$pred$noevent, rf_emr_down_int$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Internal Down-Sampling'))
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
@@ -241,6 +290,19 @@ d + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val$down_int <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
+# Recall-Precision curve             
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+
+
 
 ## Slide 67 "Up-Sampling - EMR Data"
 
@@ -265,17 +327,24 @@ sensitivity(rfClasses_up, emr_test$Class)
 ## Slide 68 "Up-Sampling - EMR Data"
 
 ggplot(rf_emr_up)
-pred <- prediction(rf_emr_up$pred$noevent, rf_emr_up$pred$obs)
 
-perf <- performance(pred, "tpr", "fpr")
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_up, emr_test,type="prob")
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+rf.ROC <- roc(predictor=rf.probs$event,
+              response=emr_test$Class,
+              levels=rev(levels(emr_test$Class)))
 
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+#KS
+pred <- prediction(rf_emr_up$pred$noevent, rf_emr_up$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Up-Sampling'))
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
@@ -283,6 +352,18 @@ d + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val$up <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
+# Recall-Precision curve             
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Up-Sampling',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+
 
 ## Slide 73 "SMOTE - EMR Data"
 
@@ -307,17 +388,24 @@ sensitivity(rfClasses_smote, emr_test$Class)
 ## Slide 74 "SMOTE - EMR Data"
 
 ggplot(rf_emr_smote)
-pred <- prediction(rf_emr_smote$pred$noevent, rf_emr_smote$pred$obs)
 
-perf <- performance(pred, "tpr", "fpr")
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_smote, emr_test,type="prob")
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+rf.ROC <- roc(predictor=rf.probs$event,
+              response=emr_test$Class,
+              levels=rev(levels(emr_test$Class)))
 
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+#KS
+pred <- prediction(rf_emr_smote$pred$noevent, rf_emr_smote$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n SMOTE'))
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
@@ -325,6 +413,18 @@ d + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val$smote <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
+# Recall-Precision curve             
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n SMOTE',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision)") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+
 
 ##"ROSE - EMR Data"
 
@@ -349,24 +449,43 @@ sensitivity(rfClasses_rose, emr_test$Class)
 ##"ROSE - EMR Data"
 
 ggplot(rf_emr_rose)
-pred <- prediction(rf_emr_rose$pred$noevent, rf_emr_rose$pred$obs)
 
-perf <- performance(pred, "tpr", "fpr")
+#Draw the ROC curve 
+rf.probs <- predict(rf_emr_rose, emr_test,type="prob")
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',x=perf@x.values[[1]], y=perf@y.values[[1]]))
+rf.ROC <- roc(predictor=rf.probs$event,
+               response=emr_test$Class,
+               levels=rev(levels(emr_test$Class)))
 
-q <- ggplot(data=roc.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line(size=1) + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+
+q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
+q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
-ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n ROSE'))
+#KS
+pred <- prediction(rf_emr_rose$pred$noevent, rf_emr_rose$pred$obs)
+perf <- performance(pred, "tpr", "fpr")
+ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]), Model='Random Forest\n ROSE'))
 
 d <- ggplot(ks, aes(x=seq_along(ks[,1]), y=ks[,1], group = Model, colour = Model)) + geom_line() + xlab(label="Index") + ylab(label="Kolmogorov-Smirnov Values")
 d + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val$rose <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
+
+# Recall-Precision curve             
+RP.perf <- performance(pred, "prec", "rec");
+
+perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n ROSE',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
+
+q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())+
+  coord_cartesian(ylim = c(0.5, 1)) 
+
 
 ## Slide 75 "SMOTE - EMR Data"
 
@@ -379,10 +498,11 @@ emr_test_pred$smote <- predict(rf_emr_smote, emr_test, type = "prob")[, "event"]
 emr_test_pred$rose <- predict(rf_emr_rose, emr_test, type = "prob")[, "event"]
 
 get_auc <- function(pred, ref){
-    auc(roc(ref, pred, levels = rev(levels(ref))))
+  auc(roc(ref, pred, levels = rev(levels(ref))))
 }
 
 apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)
+
 ks.val#It is the maximum difference between the cumulative true positive rate and the cumulative false positive rate
 
 resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf_emr_down_int,
@@ -418,12 +538,12 @@ mean(okc_test$Class == "stem")
 ## Slide 81 "CART and Costs - OkC Data"
 
 fourStats <- function (data, lev = levels(data$obs), model = NULL) {
-    accKapp <- postResample(data[, "pred"], data[, "obs"])
-    out <- c(accKapp,
-             sensitivity(data[, "pred"], data[, "obs"], lev[1]),
-             specificity(data[, "pred"], data[, "obs"], lev[2]))
-    names(out)[3:4] <- c("Sens", "Spec")
-    out
+  accKapp <- postResample(data[, "pred"], data[, "obs"])
+  out <- c(accKapp,
+           sensitivity(data[, "pred"], data[, "obs"], lev[1]),
+           specificity(data[, "pred"], data[, "obs"], lev[2]))
+  names(out)[3:4] <- c("Sens", "Spec")
+  out
 }
 
 ctrl_cost <- trainControl(method = "repeatedcv",
@@ -454,22 +574,22 @@ rpart_costs <- train(x = okc_train[, names(okc_train) != "Class"],
 ## Slide 84 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs) + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 85 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Sens") + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 86 "CART and Costs - OkC Data"
 
 ggplot(rpart_costs, metric = "Spec") + 
-    scale_x_log10() + 
-    theme(legend.position = "top")
+  scale_x_log10() + 
+  theme(legend.position = "top")
 
 
 ## Slide 87 "C5.0 and Costs - OkC Data"
@@ -522,42 +642,42 @@ table(pred_1, pred_2)
 ## across the hold-outs to get an averaged ROC curve
 
 roc_train <- function(object, best_only = TRUE, ...) {
+  
+  
+  lvs <- object$modelInfo$levels(object$finalModel)
+  
+  if(best_only) {
+    object$pred <- merge(object$pred, object$bestTune)
+  }
+  
+  ## find tuning parameter names
+  p_names <- as.character(object$modelInfo$parameters$parameter)
+  p_combos <- object$pred[, p_names, drop = FALSE]
+  
+  ## average probabilities across resamples
+  object$pred <- ddply(.data = object$pred, #plyr::
+                       .variables = c("obs", "rowIndex", p_names),
+                       .fun = function(dat, lvls = lvs) {
+                         out <- mean(dat[, lvls[1]])
+                         names(out) <- lvls[1]
+                         out
+                       })
+  
+  make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
+    out <- roc(response = x$obs,#pROC::
+               predictor = x[, lvls[1]],
+               levels = rev(lvls))
     
-    
-    lvs <- object$modelInfo$levels(object$finalModel)
-    
-    if(best_only) {
-        object$pred <- merge(object$pred, object$bestTune)
-    }
-    
-    ## find tuning parameter names
-    p_names <- as.character(object$modelInfo$parameters$parameter)
-    p_combos <- object$pred[, p_names, drop = FALSE]
-    
-    ## average probabilities across resamples
-    object$pred <- ddply(.data = object$pred, #plyr::
-                         .variables = c("obs", "rowIndex", p_names),
-                         .fun = function(dat, lvls = lvs) {
-                             out <- mean(dat[, lvls[1]])
-                             names(out) <- lvls[1]
-                             out
-                         })
-    
-    make_roc <- function(x, lvls = lvs, nms = NULL, ...) {
-        out <- roc(response = x$obs,#pROC::
-                   predictor = x[, lvls[1]],
-                   levels = rev(lvls))
-        
-        out$model_param <- x[1,nms,drop = FALSE]
-        out
-    }
-    out <- plyr::dlply(.data = object$pred, 
-                       .variables = p_names,
-                       .fun = make_roc,
-                       lvls = lvs,
-                       nms = p_names)
-    if(length(out) == 1)  out <- out[[1]]
+    out$model_param <- x[1,nms,drop = FALSE]
     out
+  }
+  out <- plyr::dlply(.data = object$pred, 
+                     .variables = p_names,
+                     .fun = make_roc,
+                     lvls = lvs,
+                     nms = p_names)
+  if(length(out) == 1)  out <- out[[1]]
+  out
 }
 
 plot(roc_train(rf_emr_mod), 
