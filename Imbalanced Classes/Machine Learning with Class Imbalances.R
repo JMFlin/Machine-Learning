@@ -146,7 +146,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
 
 #KS
 
-pred <- prediction(rf_emr_mod$pred$noevent, rf_emr_mod$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 
 ks <- data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]), Model='Random Forest')
@@ -225,7 +225,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
 
 
 #KS
-pred <- prediction(rf_emr_down$pred$noevent, rf_emr_down$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Down-Sampling'))
 
@@ -296,7 +296,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
 
 
 #KS
-pred <- prediction(rf_emr_down_int$pred$noevent, rf_emr_down_int$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Internal Down-Sampling'))
 
@@ -365,7 +365,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 #KS
-pred <- prediction(rf_emr_up$pred$noevent, rf_emr_up$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n Up-Sampling'))
 
@@ -433,7 +433,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 #KS
-pred <- prediction(rf_emr_smote$pred$noevent, rf_emr_smote$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]),Model='Random Forest\n SMOTE'))
 
@@ -501,7 +501,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 #KS
-pred <- prediction(rf_emr_rose$pred$noevent, rf_emr_rose$pred$obs)
+pred <- prediction(rf.probs$noevent, emr_test$Class)
 perf <- performance(pred, "tpr", "fpr")
 ks <- rbind(ks, data.frame(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]), Model='Random Forest\n ROSE'))
 
@@ -547,8 +547,9 @@ get_auc <- function(pred, ref){
 apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)#AUC
 tst <- data.frame(apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class))
 tst$names <- row.names(tst)
-ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
-  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+
+dat.m <- melt(tst,id.vars = "names")
+ggplot(dat.m, aes(x = names, y = value,fill=names)) +
+  geom_bar(stat='identity') + ylab(label="AUC")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -556,16 +557,18 @@ ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) +
 2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1#Gini Coefficient/Ratio Above 60% corresponds to a good model
 tst <- data.frame(2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1)
 tst$names <- row.names(tst)
-ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
-  geom_bar(stat="identity", width = 0.9)+ ylab(label="Gini Coefficient")+geom_hline(yintercept = 6, linetype = "dashed")+
+dat.m <- melt(tst,id.vars = "names")
+ggplot(dat.m, aes(x = names, y = value,fill=names)) +
+  geom_bar(stat='identity') + ylab(label="Gini Coefficient")+geom_hline(yintercept = .60, linetype = "dashed")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val#It is the maximum difference between the cumulative true positive rate and the cumulative false positive rate
 tst <- data.frame(t(ks.val))
 tst$names <- row.names(tst)
-ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
-  geom_bar(stat="identity", width = 0.9)+ ylab(label="Kolmogorov-Smirnov Values")+
+dat.m <- melt(tst,id.vars = "names")
+ggplot(dat.m, aes(x = names, y = value,fill=names)) +
+  geom_bar(stat='identity') + ylab(label="Kolmogorov-Smirnov Maximums")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
