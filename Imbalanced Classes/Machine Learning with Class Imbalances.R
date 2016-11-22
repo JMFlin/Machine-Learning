@@ -166,7 +166,7 @@ ks.val <- data.frame(normal = max(attr(perf, "y.values")[[1]] - (attr(perf, "x.v
 #and that the higher the value the better the model is at separating the positive from negative cases.
 
 # Recall-Precision curve (Also known as Lift Chart) 
-RP.perf <- performance(pred, "prec", "rec");
+RP.perf <- performance(pred, "prec", "rec")
 
 perf.data <- data.frame(Model='Random Forest',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]])
 
@@ -176,6 +176,15 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 #If your question is: "How meaningful is a positive result from my classifier given the baseline probabilities of my problem?", use a PR curve. 
 #If your question is: "How well can this classifier be expected to perform in general, at a variety of different baseline probabilities?", go with a ROC curve.
+
+#Accurary
+f.perf <- performance(pred, "acc")
+f.data <- data.frame(Model='Random Forest',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]])
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 ## Slide 59 "Down-Sampling - EMR Data"
@@ -233,6 +242,14 @@ perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n Down-Sampling',x
 
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
+#Accuracy
+f.perf <- performance(pred, "acc")
+f.data <- rbind(f.data, data.frame(Model='Random Forest\n Down-Sampling',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]]))
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
@@ -298,6 +315,14 @@ q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model))
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+#Accuracy
+f.perf <- performance(pred, "acc")
+f.data <- rbind(f.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]]))
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 
@@ -359,6 +384,14 @@ q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model))
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
+#Accuracy
+f.perf <- performance(pred, "acc")
+f.data <- rbind(f.data, data.frame(Model='Random Forest\n Up-Sampling',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]]))
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 ## Slide 73 "SMOTE - EMR Data"
@@ -416,9 +449,17 @@ RP.perf <- performance(pred, "prec", "rec")
 perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n SMOTE',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
 
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+#Accuracy
+f.perf <- performance(pred, "acc")
+f.data <- rbind(f.data, data.frame(Model='Random Forest\n SMOTE',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]]))
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 ##"ROSE - EMR Data"
@@ -479,6 +520,14 @@ q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model))
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+#Accuracy
+f.perf <- performance(pred, "acc")
+f.data <- rbind(f.data, data.frame(Model='Random Forest\n ROSE',x=f.perf@x.values[[1]], y=f.perf@y.values[[1]]))
+
+q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
+q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+          axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
 
 ## Slide 75 "SMOTE - EMR Data"
@@ -496,10 +545,30 @@ get_auc <- function(pred, ref){
 }
 
 apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)#AUC
+tst <- data.frame(apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class))
+tst$names <- row.names(tst)
+ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
+  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
 
 2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1#Gini Coefficient/Ratio Above 60% corresponds to a good model
+tst <- data.frame(2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1)
+tst$names <- row.names(tst)
+ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
+  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+geom_hline(yintercept = 6, linetype = "dashed")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 ks.val#It is the maximum difference between the cumulative true positive rate and the cumulative false positive rate
+tst <- data.frame(t(ks.val))
+tst$names <- row.names(tst)
+ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
+  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
 
 resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf_emr_down_int,
                           up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
