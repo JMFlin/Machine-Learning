@@ -185,7 +185,8 @@ q <- ggplot(data=f.data, aes(x, y=y, group = Model, colour = Model))
 q <- q + geom_line() + xlab("Cutoff") + ylab("Accuracy") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
-
+#Another cost measure that is popular is overall accuracy. 
+#This measure optimizes the correct results, but may be skewed if there are many more negatives than positives, or vice versa.
 
 ## Slide 59 "Down-Sampling - EMR Data"
 
