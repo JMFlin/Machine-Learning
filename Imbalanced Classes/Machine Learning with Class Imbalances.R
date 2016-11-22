@@ -557,7 +557,7 @@ ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) +
 tst <- data.frame(2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1)
 tst$names <- row.names(tst)
 ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
-  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+geom_hline(yintercept = 6, linetype = "dashed")+
+  geom_bar(stat="identity", width = 0.9)+ ylab(label="Gini Coefficient")+geom_hline(yintercept = 6, linetype = "dashed")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -565,7 +565,7 @@ ks.val#It is the maximum difference between the cumulative true positive rate an
 tst <- data.frame(t(ks.val))
 tst$names <- row.names(tst)
 ggplot(data=tst, aes(x=names, y=factor(round(tst[,1],3)), fill = names)) + 
-  geom_bar(stat="identity", width = 0.9)+ ylab(label="AUC")+
+  geom_bar(stat="identity", width = 0.9)+ ylab(label="Kolmogorov-Smirnov Values")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
