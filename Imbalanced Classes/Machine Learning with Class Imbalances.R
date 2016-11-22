@@ -411,12 +411,12 @@ d + theme(axis.line = element_line(), axis.text=element_text(color='black'),
 ks.val$smote <- max(attr(perf, "y.values")[[1]] - (attr(perf, "x.values")[[1]]))
 
 # Recall-Precision curve             
-RP.perf <- performance(pred, "prec", "rec");
+RP.perf <- performance(pred, "prec", "rec")
 
 perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n SMOTE',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
 
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line() + xlab("Recall") + ylab("Precision)") 
+q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
