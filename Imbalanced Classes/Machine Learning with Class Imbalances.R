@@ -495,7 +495,9 @@ get_auc <- function(pred, ref){
   auc(roc(ref, pred, levels = rev(levels(ref))))
 }
 
-apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)
+apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)#AUC
+
+2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1#Gini Coefficient/Ratio Above 60% corresponds to a good model
 
 ks.val#It is the maximum difference between the cumulative true positive rate and the cumulative false positive rate
 
