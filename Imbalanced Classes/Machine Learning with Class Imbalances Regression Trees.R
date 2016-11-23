@@ -1,3 +1,17 @@
+###################################################################
+## Code for the useR 2016 tutorial "Never Tell Me the Odds! Machine 
+## Learning with Class Imbalances" by Max Kuhn
+## 
+## Slides and this code can be found at
+##    https://github.com/topepo/useR2016
+## 
+## 
+## Data are at: https://github.com/rudeboybert/JSE_OkCupid
+##              https://github.com/topepo/useR2016
+##
+## OkC data are created in a different file
+##
+
 library(AppliedPredictiveModeling)
 library(ggplot2)
 library(caret)
