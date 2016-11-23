@@ -119,15 +119,12 @@ ggplot(rf_emr_mod)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_mod, emr_test,type="prob")
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- data.frame(Model='Random Forest',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values))
 
-rf.ROC <- roc(predictor=rf.probs$event,
-              response=emr_test$Class,
-              levels=rev(levels(emr_test$Class)))
-
-roc.data <- data.frame(Model='Random Forest',y=rf.ROC$sensitivities, x=1-rf.ROC$specificities)
-
-q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
-q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q <- ggplot(data=roc.data, aes(x=fpr, y=tpr, group = Model, colour = Model)) 
+q <- q + geom_line() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -159,7 +156,7 @@ RP.perf <- performance(pred, "prec", "rec")
 
 perf.data <- data.frame(Model='Random Forest',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]])
 
-q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
+q <- ggplot(data=perf.data, aes(x=x, y=y, group = Model, colour = Model)) 
 q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
@@ -229,12 +226,9 @@ ggplot(rf_emr_down)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_down, emr_test,type="prob")
-
-rf.ROC <- roc(predictor=rf.probs$event,
-              response=emr_test$Class,
-              levels=rev(levels(emr_test$Class)))
-
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+pr <- prediction(rf.probs$noevent, emr_test$Class)
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
 
 #KS
@@ -293,6 +287,10 @@ ggplot(rf_emr_down_int)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_down_int, emr_test,type="prob")
+pr <- prediction(rf.probs$noevent, emr_test$Class)
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
+
 
 rf.ROC <- roc(predictor=rf.probs$event,
               response=emr_test$Class,
@@ -357,12 +355,9 @@ ggplot(rf_emr_up)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_up, emr_test,type="prob")
-
-rf.ROC <- roc(predictor=rf.probs$event,
-              response=emr_test$Class,
-              levels=rev(levels(emr_test$Class)))
-
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+pr <- prediction(rf.probs$noevent, emr_test$Class)
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
 #KS
 pred <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
@@ -419,12 +414,9 @@ ggplot(rf_emr_smote)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_smote, emr_test,type="prob")
-
-rf.ROC <- roc(predictor=rf.probs$event,
-              response=emr_test$Class,
-              levels=rev(levels(emr_test$Class)))
-
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
+pr <- prediction(rf.probs$noevent, emr_test$Class)
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
 
 #KS
@@ -482,15 +474,12 @@ ggplot(rf_emr_rose)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_rose, emr_test,type="prob")
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
+pe <- performance(pr, "tpr", "fpr")
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
-rf.ROC <- roc(predictor=rf.probs$event,
-               response=emr_test$Class,
-               levels=rev(levels(emr_test$Class)))
-
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
-
-q <- ggplot(data=roc.data, aes(x=x, y=y, group = Model, colour = Model)) 
-q <- q + geom_path() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
+q <- ggplot(data=roc.data, aes(x=fpr, y=tpr, group = Model, colour = Model)) 
+q <- q + geom_line() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -534,7 +523,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
 Lift.perf <- performance(pred, "lift", "rpp")
 perflift.data <- rbind(perflift.data, data.frame(Model='Random Forest\n ROSE',x=Lift.perf@x.values[[1]], y=Lift.perf@y.values[[1]]))
 q <- ggplot(data=perflift.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_path() + xlab("Rate of positive predictions") + ylab("Lift") 
+q <- q + geom_line() + xlab("Rate of positive predictions") + ylab("Lift") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 
