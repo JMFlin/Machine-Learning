@@ -115,6 +115,9 @@ sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly
 specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a negative result? True negative
 
 confu <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Balanced Accuracy"]))
+#If the classifier performs equally well on either class, this term reduces to the conventional accuracy (number of correct predictions divided by number of predictions). 
+#In contrast, if the conventional accuracy is high only because the classifier takes advantage of an imbalanced test set, then the balanced accuracy, as desired, will drop to chance.
+#The balanced accuracy used here is symmetric about the type of class.
 confusionMatrix(data = rfClasses, emr_test$Class)
 #The "no--information rate" is the largest proportion of the observed classes.
 #A hypothesis test is also computed to evaluate whether the overall accuracy rate is greater than the rate of the largest class.
