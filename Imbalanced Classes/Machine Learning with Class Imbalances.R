@@ -66,33 +66,15 @@ table(emr_train$Class)
 table(emr_test$Class)
 
 
-## Slide 40 and 43 "A Single Shallow Tree"
-
-rp1 <- rpart(Class ~ ., data = emr_train, control = rpart.control(maxdepth = 3, cp = 0))
-plot(as.party(rp1))
-
-## Slide 44 "A Single Shallow Tree (Bootstrapped)"
-
-set.seed(9595)
-dat2 <- emr_train[sample(1:nrow(emr_train), nrow(emr_train), replace = TRUE),]
-rp2 <- rpart(Class ~ ., data = dat2, control = rpart.control(maxdepth = 3, cp = 0))
-plot(as.party(rp2))
-
-## Slide 45 "A Single Shallow Tree (Bootstrapped)"
-
-set.seed(1976)
-dat3 <- emr_train[sample(1:nrow(emr_train), nrow(emr_train), replace = TRUE),]
-rp3 <- rpart(Class ~ ., data = dat3, control = rpart.control(maxdepth = 3, cp = 0))
-plot(as.party(rp3))
-
 ## Slide 47 "Random Forests with the EMR Data"
 
 ## on Windows, try the doParallel package
 ## **if** your computer has multiple cores and sufficient memory
 #cmd -> WMIC CPU Get DeviceID,NumberOfCores,NumberOfLogicalProcessors
 
-ctrl <- trainControl(method = "repeatedcv",#cv
-                     repeats = 1, # this does 1 repeats of 10-fold corss validation
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 2,
+                     repeats = 2, #  number = 10, repeats = 10 is 10 fold vc
                      classProbs = TRUE,#used to calculate the area under ROC, sensitivity and specificity. Only for 2 class problems.
                      savePredictions = TRUE,
                      summaryFunction = twoClassSummary)
@@ -625,6 +607,31 @@ bwplot(resamps)
 # dot plots of results
 dotplot(resamps)
 
+###################################################################
+###################################################################
+###################################################################
+
+## Slide 40 and 43 "A Single Shallow Tree"
+
+rp1 <- rpart(Class ~ ., data = emr_train, control = rpart.control(maxdepth = 3, cp = 0))
+plot(as.party(rp1))
+
+## Slide 44 "A Single Shallow Tree (Bootstrapped)"
+
+set.seed(9595)
+dat2 <- emr_train[sample(1:nrow(emr_train), nrow(emr_train), replace = TRUE),]
+rp2 <- rpart(Class ~ ., data = dat2, control = rpart.control(maxdepth = 3, cp = 0))
+plot(as.party(rp2))
+
+## Slide 45 "A Single Shallow Tree (Bootstrapped)"
+
+set.seed(1976)
+dat3 <- emr_train[sample(1:nrow(emr_train), nrow(emr_train), replace = TRUE),]
+rp3 <- rpart(Class ~ ., data = dat3, control = rpart.control(maxdepth = 3, cp = 0))
+plot(as.party(rp3))
+
+###################################################################
+###################################################################
 ###################################################################
 
 ## Slide 25 "Example Data - OKCupid"
