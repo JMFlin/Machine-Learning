@@ -21,7 +21,6 @@
 
 #down-sampling: randomly subset all the classes in the training set so that their class frequencies match the least prevalent class. 
 #For example, suppose that 80% of the training set samples are the first class and the remaining 20% are in the second class. 
-
 #Down-sampling would randomly sample the first class to be the same size as the second class (so that only 40% of the total training set is used to fit the model). 
 #caret contains a function (downSample) to do this.
 
