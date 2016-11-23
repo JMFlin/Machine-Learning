@@ -94,7 +94,9 @@ rf_emr_mod <- train(Class ~ .,
 rfClasses <- predict(rf_emr_mod, emr_test)
 
 sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result? True positive
-specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a negative result? True negative
+specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a nonevent result? True negative
+sens.spec <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Sensitivity"]))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Specificity"])))
 
 confu <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Balanced Accuracy"]))
 #If the classifier performs equally well on either class, this term reduces to the conventional accuracy (number of correct predictions divided by number of predictions). 
@@ -215,6 +217,11 @@ rfClasses_down <- predict(rf_emr_down, emr_test)
 confusionMatrix(data = rfClasses_down, emr_test$Class)
 postResample(rfClasses_down, emr_test$Class)
 sensitivity(rfClasses_down, emr_test$Class)
+specificity(rfClasses_down, emr_test$Class)
+
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Sensitivity"])))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Specificity"])))
+
 
 Kap <- rbind(Kap, data.frame(t(postResample(rfClasses_down, emr_test$Class))))
 confu <- rbind(confu, data.frame(t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Balanced Accuracy"])))
@@ -277,6 +284,11 @@ rfClasses_down_int <- predict(rf_emr_down_int, emr_test)
 confusionMatrix(data = rfClasses_down_int, emr_test$Class)
 postResample(rfClasses_down_int, emr_test$Class)
 sensitivity(rfClasses_down_int, emr_test$Class)
+specificity(rfClasses_down_int, emr_test$Class)
+
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Sensitivity"])))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Specificity"])))
+
 
 Kap <- rbind(Kap, data.frame(t(postResample(rfClasses_down_int, emr_test$Class))))
 confu <- rbind(confu, data.frame(t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Balanced Accuracy"])))
@@ -344,6 +356,11 @@ rfClasses_up <- predict(rf_emr_up, emr_test)
 confusionMatrix(data = rfClasses_up, emr_test$Class)
 postResample(rfClasses_up, emr_test$Class)
 sensitivity(rfClasses_up, emr_test$Class)
+specificity(rfClasses_up, emr_test$Class)
+
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Sensitivity"])))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Specificity"])))
+
 
 Kap <- rbind(Kap, data.frame(t(postResample(rfClasses_up, emr_test$Class))))
 confu <- rbind(confu, data.frame(t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Balanced Accuracy"])))
@@ -403,6 +420,11 @@ rfClasses_smote <- predict(rf_emr_smote, emr_test)
 confusionMatrix(data = rfClasses_smote, emr_test$Class)
 postResample(rfClasses_smote, emr_test$Class)
 sensitivity(rfClasses_smote, emr_test$Class)
+specificity(rfClasses_smote, emr_test$Class)
+
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Sensitivity"])))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Specificity"])))
+
 
 Kap <- rbind(Kap, data.frame(t(postResample(rfClasses_smote, emr_test$Class))))
 confu <- rbind(confu, data.frame(t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Balanced Accuracy"])))
@@ -463,6 +485,11 @@ rfClasses_rose <- predict(rf_emr_rose, emr_test)
 confusionMatrix(data = rfClasses_rose, emr_test$Class)
 postResample(rfClasses_rose, emr_test$Class)
 sensitivity(rfClasses_rose, emr_test$Class)
+specificity(rfClasses_rose, emr_test$Class)
+
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Sensitivity"])))
+sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Specificity"])))
+
 
 confu <- rbind(confu, data.frame(t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Balanced Accuracy"])))
 
@@ -582,6 +609,24 @@ confu$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 dat.confu <- melt(confu,id.vars = "names")
 ggplot(dat.confu, aes(x = names, y = value)) +
   geom_bar(stat='identity') + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ 
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+sens.1 <- data.frame(t(data.frame(sens.spec)))
+a <- data.frame(names(emr_test_pred)[2:length(names(emr_test_pred))])
+b <- data.frame(a[rep(seq_len(nrow(a)), each=2),])
+sens.1$names <- b[,1]
+dat.sens.1 <- melt(sens.1,id.vars = "names")
+dat.sens.1$variable <- row.names(sens.1)
+
+dat.sens.1$variable <- gsub(".1", "",dat.sens.1$variable)
+dat.sens.1$variable <- gsub(".2", "",dat.sens.1$variable)
+dat.sens.1$variable <- gsub(".3", "",dat.sens.1$variable)
+dat.sens.1$variable <- gsub(".4", "",dat.sens.1$variable)
+dat.sens.1$variable <- gsub(".5", "",dat.sens.1$variable)
+
+ggplot(dat.sens.1, aes(x = names, y = value, fill=variable)) +
+  geom_bar(stat='identity', position = "dodge") + ylab(label="Sensitivity and Specificity")+ 
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
