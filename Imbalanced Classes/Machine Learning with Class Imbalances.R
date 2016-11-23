@@ -74,7 +74,7 @@ table(emr_test$Class)
 
 ctrl <- trainControl(method = "repeatedcv",
                      number = 2,
-                     repeats = 2, #  number = 10, repeats = 10 is 10 fold vc
+                     repeats = 2, #  number = 10, repeats = 10 is 10 fold cv
                      classProbs = TRUE,#used to calculate the area under ROC, sensitivity and specificity. Only for 2 class problems.
                      savePredictions = TRUE,
                      summaryFunction = twoClassSummary)
