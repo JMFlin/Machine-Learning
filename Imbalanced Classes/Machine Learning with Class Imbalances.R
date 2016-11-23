@@ -513,7 +513,7 @@ q + theme(axis.line = element_line(), axis.text=element_text(color='black'),
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 #Sensitivity-Specificity
 SS.perf <- performance(pred, "sens", "spec")
-perfss.data <- rbind(perfss.data, data.frame(Model='Random Forest\n ROSEE',x=SS.perf@x.values[[1]], y=SS.perf@y.values[[1]]))
+perfss.data <- rbind(perfss.data, data.frame(Model='Random Forest\n ROSE',x=SS.perf@x.values[[1]], y=SS.perf@y.values[[1]]))
 
 q <- ggplot(data=perfss.data, aes(x, y=y, group = Model, colour = Model)) 
 q <- q + geom_path() + xlab("Specificity") + ylab("Sensitivity") 
