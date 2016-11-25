@@ -309,9 +309,6 @@ rf.ROC <- roc(predictor=rf.probs$event,
               response=emr_test$Class,
               levels=rev(levels(emr_test$Class)))
 
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',x=1-rf.ROC$specificities, y=rf.ROC$sensitivities))
-
-
 #KS
 pred <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 perf <- performance(pred, "tpr", "fpr")
