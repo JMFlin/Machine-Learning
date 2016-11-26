@@ -543,7 +543,7 @@ RP.perf <- performance(pred, "prec", "rec");
 perf.data <- rbind(perf.data, data.frame(Model='Random Forest\n ROSE',x=RP.perf@x.values[[1]], y=RP.perf@y.values[[1]]))
 
 q <- ggplot(data=perf.data, aes(x, y=y, group = Model, colour = Model)) 
-q <- q + geom_line() + xlab("Recall") + ylab("Precision") 
+q <- q + geom_line() + xlab("Recall (Sensitivity)") + ylab("Precision") 
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 #Accuracy
@@ -674,7 +674,7 @@ my_subset_ROC_t$names <- names(my_subset_ROC)
 ROC_melt <- melt(my_subset_ROC_t ,id.vars = "names")
 
 plot1 <- ggplot(data = ROC_melt, aes( names, value)) +
-  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("ROC")+
+  stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(aes(color = "blue")) + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("ROC")+guides(colour=FALSE)+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -685,7 +685,7 @@ my_subset_Sens_t$names <- names(my_subset_Sens)
 Sens_melt <- melt(my_subset_Sens_t ,id.vars = "names")
 
 plot2 <- ggplot(data = Sens_melt, aes( names, value)) +
-  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("Sensitivity")+
+  stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(color = "red") + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("Sensitivity")+guides(colour=FALSE)+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -697,7 +697,7 @@ my_subset_Spec_t$names <- names(my_subset_Spec)
 Spec_melt <- melt(my_subset_Spec_t ,id.vars = "names")
 
 plot3 <- ggplot(data = Spec_melt, aes( names, value)) +
-  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="") + ggtitle("Specificity")+
+  stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(color = "blue") + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="") + ggtitle("Specificity")+guides(colour=FALSE)+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
