@@ -45,6 +45,7 @@ library(plyr)
 library(ROCR)
 library(reshape2)
 library(gridExtra)
+library(colorspace)
 
 ## Slide 22 "Example Data - Electronic Medical Records"
 
@@ -590,7 +591,7 @@ tst <- data.frame(apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Cla
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) + #fill = names
-  geom_bar(stat='identity') + ylab(label="AUC")+ geom_hline(yintercept = .90, linetype = "dashed")+ geom_hline(yintercept = .70, linetype = "dashed")+xlab(label="")+
+  geom_bar(stat='identity', colour="black") + ylab(label="AUC")+ geom_hline(yintercept = .90, linetype = "dashed")+ geom_hline(yintercept = .70, linetype = "dashed")+xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -600,7 +601,7 @@ tst <- data.frame(2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$C
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) +xlab(label="")+
-  geom_bar(stat='identity') + ylab(label="Gini Coefficient")+geom_hline(yintercept = .60, linetype = "dashed")+
+  geom_bar(stat='identity', colour="black") + ylab(label="Gini Coefficient")+geom_hline(yintercept = .60, linetype = "dashed")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -609,7 +610,7 @@ tst <- data.frame(t(ks.val))
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Kolmogorov-Smirnov Maximums")+xlab(label="")+
+  geom_bar(stat='identity', colour="black") + ylab(label="Kolmogorov-Smirnov Maximums")+xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -617,14 +618,14 @@ Kap$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 Kap$Accuracy <- NULL
 dat.m <- melt(Kap,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Kappa")+ geom_hline(yintercept = .40, linetype = "dashed")+ geom_hline(yintercept = .75, linetype = "dashed")+ geom_hline(yintercept = .20, linetype = "dashed") +xlab(label="")+
+  geom_bar(stat='identity', colour="black") + ylab(label="Kappa")+ geom_hline(yintercept = .40, linetype = "dashed")+ geom_hline(yintercept = .75, linetype = "dashed")+ geom_hline(yintercept = .20, linetype = "dashed") +xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 confu$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 dat.confu <- melt(confu,id.vars = "names")
 ggplot(dat.confu, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ xlab(label="")+
+  geom_bar(stat='identity', colour="black") + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -651,12 +652,15 @@ prec.1$names <- b[,1]
 dat.prec.1 <- melt(prec.1,id.vars = "names")
 dat.prec.1$variable <- rep(c("Precision"), times=nrow(dat.prec.1)/2)
 
-all <- rbind(dat.prec.1, dat.sens.1)
+out <- split(all, f = all$variable)
+out.df <- data.frame(names = names(emr_test_pred)[2:length(names(emr_test_pred))], variable = "F1 Score", value = 2*((out$Precision$value*out$Sensitivity$value)/(out$Precision$value+out$Sensitivity$value)))
+
+all <- rbind(dat.prec.1, dat.sens.1, out.df)
+
 ggplot(all, aes(x = names, y = value, fill=variable)) +
-  geom_bar(stat='identity', position = "dodge") + ylab(label="Sensitivity and Specificity") + xlab(label="")+
+  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="Sensitivity and Specificity") + xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
-
 
 resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf_emr_down_int,
                           up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
@@ -674,7 +678,7 @@ my_subset_ROC_t$names <- names(my_subset_ROC)
 ROC_melt <- melt(my_subset_ROC_t ,id.vars = "names")
 
 plot1 <- ggplot(data = ROC_melt, aes( names, value)) +
-  stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(aes(color = "blue")) + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("ROC")+guides(colour=FALSE)+
+  stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(aes(color = "blue")) + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("AUC")+guides(colour=FALSE)+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -688,8 +692,6 @@ plot2 <- ggplot(data = Sens_melt, aes( names, value)) +
   stat_boxplot(geom ='errorbar')+ geom_boxplot() + geom_jitter(color = "red") + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("Sensitivity")+guides(colour=FALSE)+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
-
-
 
 my_subset_Spec_t <- data.frame(t(my_subset_Spec))
 my_subset_Spec_t$names <- names(my_subset_Spec)

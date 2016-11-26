@@ -287,7 +287,7 @@ ggplot(weather, aes(season,rain)) +
 
 # Bar plot - dry and wet days by season (relative)
 ggplot(weather,aes(season)) +
-  geom_bar(aes(fill = rained), position = "fill") +
+  geom_bar(aes(fill = rained), position = "fill", colour="black") +
   geom_hline(aes(yintercept = prop.table(table(weather$rained))["Yes"]),
              linetype = "dashed") +
   annotate("text", x = 1, y = 0.45, label = "Yearly avg") +
