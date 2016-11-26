@@ -44,6 +44,7 @@ library(ggthemes)
 library(plyr)
 library(ROCR)
 library(reshape2)
+library(gridExtra)
 
 ## Slide 22 "Example Data - Electronic Medical Records"
 
@@ -94,8 +95,13 @@ rf_emr_mod <- train(Class ~ .,
 
 rfClasses <- predict(rf_emr_mod, emr_test)
 
-sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result? True positive
-specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a nonevent result? True negative
+sensitivity(rfClasses, emr_test$Class)#Sensitivity: given that a result is truly an event, what is the probability that the model will predict an event result? True positive rate
+#Put another way it is the number of positive predictions divided by the number of positive class values in the test data.
+specificity(rfClasses, emr_test$Class)#Specificity: given that a result is truly not an event, what is the probabiliy that the model will predict a nonevent result? True negative rate
+precision(rfClasses, emr_test$Class)#Precision: it is the number of positive predictions divided by the total number of positive class values predicted. It is also called the Positive Predictive Value (PPV).
+#Precision can be thought of as a measure of a classifiers exactness.
+recall(rfClasses, emr_test$Class)#Recall: Same as Sensitivity
+
 sens.spec <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Sensitivity"]))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Specificity"])))
 
@@ -219,6 +225,8 @@ confusionMatrix(data = rfClasses_down, emr_test$Class)
 postResample(rfClasses_down, emr_test$Class)
 sensitivity(rfClasses_down, emr_test$Class)
 specificity(rfClasses_down, emr_test$Class)
+precision(rfClasses_down, emr_test$Class)
+recall(rfClasses_down, emr_test$Class)
 
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Sensitivity"])))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Specificity"])))
@@ -286,6 +294,8 @@ confusionMatrix(data = rfClasses_down_int, emr_test$Class)
 postResample(rfClasses_down_int, emr_test$Class)
 sensitivity(rfClasses_down_int, emr_test$Class)
 specificity(rfClasses_down_int, emr_test$Class)
+precision(rfClasses_down_int, emr_test$Class)
+recall(rfClasses_down_int, emr_test$Class)
 
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Sensitivity"])))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Specificity"])))
@@ -355,6 +365,9 @@ confusionMatrix(data = rfClasses_up, emr_test$Class)
 postResample(rfClasses_up, emr_test$Class)
 sensitivity(rfClasses_up, emr_test$Class)
 specificity(rfClasses_up, emr_test$Class)
+precision(rfClasses_up, emr_test$Class)
+recall(rfClasses_up, emr_test$Class)
+
 
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Sensitivity"])))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Specificity"])))
@@ -419,6 +432,8 @@ confusionMatrix(data = rfClasses_smote, emr_test$Class)
 postResample(rfClasses_smote, emr_test$Class)
 sensitivity(rfClasses_smote, emr_test$Class)
 specificity(rfClasses_smote, emr_test$Class)
+precision(rfClasses_smote, emr_test$Class)
+recall(rfClasses_smote, emr_test$Class)
 
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Sensitivity"])))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Specificity"])))
@@ -484,6 +499,9 @@ confusionMatrix(data = rfClasses_rose, emr_test$Class)
 postResample(rfClasses_rose, emr_test$Class)
 sensitivity(rfClasses_rose, emr_test$Class)
 specificity(rfClasses_rose, emr_test$Class)
+precision(rfClasses_rose, emr_test$Class)
+recall(rfClasses_rose, emr_test$Class)
+
 
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Sensitivity"])))
 sens.spec <- cbind(sens.spec,data.frame(t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Specificity"])))
@@ -572,7 +590,7 @@ tst <- data.frame(apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Cla
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) + #fill = names
-  geom_bar(stat='identity') + ylab(label="AUC")+ geom_hline(yintercept = .90, linetype = "dashed")+ geom_hline(yintercept = .70, linetype = "dashed")+
+  geom_bar(stat='identity') + ylab(label="AUC")+ geom_hline(yintercept = .90, linetype = "dashed")+ geom_hline(yintercept = .70, linetype = "dashed")+xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -581,7 +599,7 @@ ggplot(dat.m, aes(x = names, y = value)) + #fill = names
 tst <- data.frame(2*apply(emr_test_pred[, -1], 2, get_auc, ref = emr_test_pred$Class)-1)
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
-ggplot(dat.m, aes(x = names, y = value)) +
+ggplot(dat.m, aes(x = names, y = value)) +xlab(label="")+
   geom_bar(stat='identity') + ylab(label="Gini Coefficient")+geom_hline(yintercept = .60, linetype = "dashed")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
@@ -591,7 +609,7 @@ tst <- data.frame(t(ks.val))
 tst$names <- row.names(tst)
 dat.m <- melt(tst,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Kolmogorov-Smirnov Maximums")+
+  geom_bar(stat='identity') + ylab(label="Kolmogorov-Smirnov Maximums")+xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -599,14 +617,14 @@ Kap$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 Kap$Accuracy <- NULL
 dat.m <- melt(Kap,id.vars = "names")
 ggplot(dat.m, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Kappa")+ geom_hline(yintercept = .40, linetype = "dashed")+ geom_hline(yintercept = .75, linetype = "dashed")+ geom_hline(yintercept = .20, linetype = "dashed") +
+  geom_bar(stat='identity') + ylab(label="Kappa")+ geom_hline(yintercept = .40, linetype = "dashed")+ geom_hline(yintercept = .75, linetype = "dashed")+ geom_hline(yintercept = .20, linetype = "dashed") +xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
 confu$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 dat.confu <- melt(confu,id.vars = "names")
 ggplot(dat.confu, aes(x = names, y = value)) +
-  geom_bar(stat='identity') + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ 
+  geom_bar(stat='identity') + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -619,8 +637,23 @@ dat.sens.1$variable <- row.names(sens.1)
 
 dat.sens.1$variable <- gsub("\\.[[:digit:]]", "",dat.sens.1$variable)
 
-ggplot(dat.sens.1, aes(x = names, y = value, fill=variable)) +
-  geom_bar(stat='identity', position = "dodge") + ylab(label="Sensitivity and Specificity")+ 
+prec <- data.frame(precision(rfClasses, emr_test$Class),
+                   precision(rfClasses_down, emr_test$Class),
+                   precision(rfClasses_down_int, emr_test$Class),
+                   precision(rfClasses_up, emr_test$Class),
+                   precision(rfClasses_smote, emr_test$Class),
+                   precision(rfClasses_smote, emr_test$Class))
+
+prec.1 <- data.frame(t(prec))
+a <- data.frame(names(emr_test_pred)[2:length(names(emr_test_pred))])
+b <- data.frame(a[rep(seq_len(nrow(a)), each=1),])
+prec.1$names <- b[,1]
+dat.prec.1 <- melt(prec.1,id.vars = "names")
+dat.prec.1$variable <- rep(c("Precision"), times=nrow(dat.prec.1)/2)
+
+all <- rbind(dat.prec.1, dat.sens.1)
+ggplot(all, aes(x = names, y = value, fill=variable)) +
+  geom_bar(stat='identity', position = "dodge") + ylab(label="Sensitivity and Specificity") + xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
@@ -629,8 +662,43 @@ resamps <- resamples(list(normal = rf_emr_mod, down = rf_emr_down, down_int = rf
                           up=rf_emr_up,smote=rf_emr_smote,rose=rf_emr_rose))
 summary(resamps)
 
-trellis.par.set(caretTheme())
-# boxplots of results
-bwplot(resamps)
-# dot plots of results
-dotplot(resamps)
+df <- data.frame(resamps$values)
+
+my_subset_ROC <- df[,grep("ROC", names(df))]
+my_subset_Sens <- df[,grep("Sens", names(df))]
+my_subset_Spec <- df[,grep("Spec", names(df))]
+
+my_subset_ROC_t <- data.frame(t(my_subset_ROC))
+my_subset_ROC_t$names <- names(my_subset_ROC)
+
+ROC_melt <- melt(my_subset_ROC_t ,id.vars = "names")
+
+plot1 <- ggplot(data = ROC_melt, aes( names, value)) +
+  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("ROC")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+
+my_subset_Sens_t <- data.frame(t(my_subset_Sens))
+my_subset_Sens_t$names <- names(my_subset_Sens)
+
+Sens_melt <- melt(my_subset_Sens_t ,id.vars = "names")
+
+plot2 <- ggplot(data = Sens_melt, aes( names, value)) +
+  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="")+ggtitle("Sensitivity")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+
+
+my_subset_Spec_t <- data.frame(t(my_subset_Spec))
+my_subset_Spec_t$names <- names(my_subset_Spec)
+
+Spec_melt <- melt(my_subset_Spec_t ,id.vars = "names")
+
+plot3 <- ggplot(data = Spec_melt, aes( names, value)) +
+  geom_boxplot() + geom_jitter() + coord_flip(ylim = c(0, 1)) + xlab(label="") + ylab(label="") + ggtitle("Specificity")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+grid.arrange(plot1, plot2, plot3, ncol=1)
