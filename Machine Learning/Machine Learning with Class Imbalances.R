@@ -622,12 +622,52 @@ ggplot(dat.m, aes(x = names, y = value)) +
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
+
+Accus <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$overall["Accuracy"]), 
+                    t(confusionMatrix(data = rfClasses_down, emr_test$Class)$overall["Accuracy"]),
+                      t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$overall["Accuracy"]),
+                        t(confusionMatrix(data = rfClasses_up, emr_test$Class)$overall["Accuracy"]),
+                          t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$overall["Accuracy"]),
+                            t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$overall["Accuracy"]))
+Accus.1 <- data.frame(t(Accus))
+Accus.1$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
+dat.Accus <- melt(Accus.1,id.vars = "names")
+dat.Accus$variable <- "Accuracy"
+
+
 confu$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 dat.confu <- melt(confu,id.vars = "names")
-ggplot(dat.confu, aes(x = names, y = value)) +
-  geom_bar(stat='identity', colour="black") + ylab(label="Balanced Accuracy")+ geom_hline(yintercept = .50, linetype = "dashed")+ xlab(label="")+
+dat.confu <- rbind(dat.confu, dat.Accus)
+ggplot(dat.confu, aes(x = names, y = value, fill=variable)) +
+  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="")+ geom_hline(yintercept = confusionMatrix(data = rfClasses, emr_test$Class)$overall["AccuracyNull"], linetype = "dashed")+ xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+Prev <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Detection Rate"]), 
+                   t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Detection Rate"]),
+                   t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Detection Rate"]),
+                   t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Detection Rate"]),
+                   t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Detection Rate"]),
+                   t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Detection Rate"]),
+                   t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass["Detection Prevalence"]), 
+                   t(confusionMatrix(data = rfClasses_down, emr_test$Class)$byClass["Detection Prevalence"]),
+                   t(confusionMatrix(data = rfClasses_down_int, emr_test$Class)$byClass["Detection Prevalence"]),
+                   t(confusionMatrix(data = rfClasses_up, emr_test$Class)$byClass["Detection Prevalence"]),
+                   t(confusionMatrix(data = rfClasses_smote, emr_test$Class)$byClass["Detection Prevalence"]),
+                   t(confusionMatrix(data = rfClasses_rose, emr_test$Class)$byClass["Detection Prevalence"]))
+
+Prev.1 <- data.frame(t(Prev))
+Prev.1$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
+Prev.1$variable <- row.names(Prev.1)
+Prev.1$variable <- gsub("\\.[[:digit:]]", "", Prev.1$variable)
+
+dat.Prev.1 <- melt(Prev.1,id.vars = "names")
+
+ggplot(Prev.1, aes(x = names, y = Prev.1[,1], fill=variable)) +
+  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="")+ xlab(label="")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
 
 sens.1 <- data.frame(t(data.frame(sens.spec)))
 a <- data.frame(names(emr_test_pred)[2:length(names(emr_test_pred))])
@@ -652,13 +692,14 @@ prec.1$names <- b[,1]
 dat.prec.1 <- melt(prec.1,id.vars = "names")
 dat.prec.1$variable <- rep(c("Precision"), times=nrow(dat.prec.1)/2)
 
+all <- rbind(dat.prec.1, dat.sens.1)
 out <- split(all, f = all$variable)
+#same as from confusionMatrix
 out.df <- data.frame(names = names(emr_test_pred)[2:length(names(emr_test_pred))], variable = "F1 Score", value = 2*((out$Precision$value*out$Sensitivity$value)/(out$Precision$value+out$Sensitivity$value)))
-
 all <- rbind(dat.prec.1, dat.sens.1, out.df)
 
 ggplot(all, aes(x = names, y = value, fill=variable)) +
-  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="Sensitivity and Specificity") + xlab(label="")+
+  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="") + xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
