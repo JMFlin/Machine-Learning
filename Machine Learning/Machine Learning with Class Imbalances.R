@@ -128,7 +128,7 @@ Kap <- data.frame(t(postResample(rfClasses, emr_test$Class)))
 
 ggplot(rf_emr_mod)
 
-#Draw the ROC curve 
+#Draw the ROC curve (Some call it Lift curve and some Gain)
 rf.probs <- predict(rf_emr_mod, emr_test,type="prob")
 pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
@@ -207,7 +207,6 @@ q <- q + geom_path() + xlab("Lift") + ylab("Rate of positive predictions")
 q + theme(axis.line = element_line(), axis.text=element_text(color='black'), 
           axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text()) 
 #lift can be understood as a ratio of two percentages: the percentage of correct positive classifications made by the model to the percentage of actual positive classifications in the test data.
-
 
 ## Slide 59 "Down-Sampling - EMR Data"
 
@@ -583,6 +582,10 @@ emr_test_pred$up <- predict(rf_emr_up, emr_test, type = "prob")[, "event"]
 emr_test_pred$smote <- predict(rf_emr_smote, emr_test, type = "prob")[, "event"]
 emr_test_pred$rose <- predict(rf_emr_rose, emr_test, type = "prob")[, "event"]
 
+#Calibration curves can be used to characterisze how consistent the predicted class probabilities are with the observed event rates.
+cal_obj <- calibration(Class ~ normal+down+down_int+up+smote+rose, data = emr_test_pred)
+ggplot(cal_obj) + geom_line()
+
 get_auc <- function(pred, ref){
   auc(roc(ref, pred, levels = rev(levels(ref))))
 }
@@ -662,10 +665,25 @@ Prev.1$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
 Prev.1$variable <- row.names(Prev.1)
 Prev.1$variable <- gsub("\\.[[:digit:]]", "", Prev.1$variable)
 
-dat.Prev.1 <- melt(Prev.1,id.vars = "names")
-
 ggplot(Prev.1, aes(x = names, y = Prev.1[,1], fill=variable)) +
   geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="")+ xlab(label="")+
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), 
+        axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
+
+
+logLoss <- data.frame(t(mnLogLoss(data = rf_emr_mod$pred, lev = levels(emr_test$Class))),
+                   t(mnLogLoss(data = rf_emr_down$pred, lev = levels(emr_test$Class))),
+                   t(mnLogLoss(data = rf_emr_down_int$pred, lev = levels(emr_test$Class))),
+                   t(mnLogLoss(data = rf_emr_up$pred, lev = levels(emr_test$Class))),
+                   t(mnLogLoss(data = rf_emr_smote$pred, lev = levels(emr_test$Class))),
+                   t(mnLogLoss(data = rf_emr_rose$pred, lev = levels(emr_test$Class))))
+logLoss <- data.frame(t(logLoss))
+logLoss$names <- names(emr_test_pred)[2:length(names(emr_test_pred))]
+logLoss$variable <- row.names(logLoss)
+logLoss$variable <- gsub("\\.[[:digit:]]", "", logLoss$variable)#Smaller LogLoss is better!
+#Log Loss heavily penalises classifiers that are confident about an incorrect classification.
+ggplot(logLoss, aes(x = names, y = logLoss[,1])) +
+  geom_bar(stat='identity', position = "dodge", colour="black") + ylab(label="LogLoss")+ xlab(label="")+
   theme(axis.line = element_line(), axis.text=element_text(color='black'), 
         axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text())
 
