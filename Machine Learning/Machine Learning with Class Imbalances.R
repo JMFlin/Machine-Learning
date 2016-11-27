@@ -110,7 +110,7 @@ confu <- data.frame(t(confusionMatrix(data = rfClasses, emr_test$Class)$byClass[
 #If the classifier performs equally well on either class, this term reduces to the conventional accuracy (number of correct predictions divided by number of predictions). 
 #In contrast, if the conventional accuracy is high only because the classifier takes advantage of an imbalanced test set, then the balanced accuracy, as desired, will drop to chance.
 #The balanced accuracy used here is symmetric about the type of class.
-confusionMatrix(data = rfClasses, emr_test$Class)
+confusionMatrix(data = rfClasses, emr_test$Class, positive = "event")
 #The "no--information rate" is the largest proportion of the observed classes (Baseline!!).
 #A hypothesis test is also computed to evaluate whether the overall accuracy rate is greater than the rate of the largest class.
 #Also, the prevalence of the "positive event" is computed from the data (unless passed in as an argument), 
@@ -122,6 +122,7 @@ Kap <- data.frame(t(postResample(rfClasses, emr_test$Class)))
 #The Kappa statistic (or value) is a metric that compares an Observed Accuracy with an Expected Accuracy (random chance).
 #Landis and Koch considers 0-0.20 as slight, 0.21-0.40 as fair, 0.41-0.60 as moderate, 0.61-0.80 as substantial, and 0.81-1 as almost perfect. 
 #Fleiss considers kappas > 0.75 as excellent, 0.40-0.75 as fair to good, and < 0.40 as poor.
+#a model will have a high Kappa score if there is a big difference between the accuracy and the null error rate.
 
 ## Slide 50 "Random Forest Results - EMR Example"
 
@@ -243,7 +244,7 @@ ggplot(rf_emr_down)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_down, emr_test,type="prob")
-pr <- prediction(rf.probs$noevent, emr_test$Class)
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
 roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Down-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
@@ -311,7 +312,7 @@ ggplot(rf_emr_down_int)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_down_int, emr_test,type="prob")
-pr <- prediction(rf.probs$noevent, emr_test$Class)
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
 roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Internal Down-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
@@ -384,7 +385,7 @@ ggplot(rf_emr_up)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_up, emr_test,type="prob")
-pr <- prediction(rf.probs$noevent, emr_test$Class)
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
 roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n Up-Sampling',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
@@ -450,7 +451,7 @@ ggplot(rf_emr_smote)
 
 #Draw the ROC curve 
 rf.probs <- predict(rf_emr_smote, emr_test,type="prob")
-pr <- prediction(rf.probs$noevent, emr_test$Class)
+pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
 roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n SMOTE',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
@@ -520,7 +521,7 @@ ggplot(rf_emr_rose)
 rf.probs <- predict(rf_emr_rose, emr_test,type="prob")
 pr <- prediction(rf.probs$event, factor(emr_test$Class, levels = c("noevent", "event"), ordered = TRUE))
 pe <- performance(pr, "tpr", "fpr")
-roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE',fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
+roc.data <- rbind(roc.data, data.frame(Model='Random Forest\n ROSE', fpr=unlist(pe@x.values), tpr=unlist(pe@y.values)))
 
 q <- ggplot(data=roc.data, aes(x=fpr, y=tpr, group = Model, colour = Model)) 
 q <- q + geom_line() + geom_abline(intercept = 0, slope = 1) + xlab("False Positive Rate (1-Specificity)") + ylab("True Positive Rate (Sensitivity)") 
