@@ -39,7 +39,7 @@ na_test_data <- function(data){
 hist_func_cont <- function(data){
 
   for(i in 1:ncol(data)){
-    if(class(data[,i]) != "factor"){
+    if(class(data[,i]) != "factor" & class(data[,i]) != "character" & class(data[,i]) != "Date"){
       breaks <- pretty(range(data[,i]), n = nclass.Sturges(data[,i]), min.n = 1)
       bwidth <- breaks[2]-breaks[1]
       df <- data.frame(data[,i])
@@ -71,17 +71,16 @@ hist_func_cont <- function(data){
 }
 
 
-
 factor_table <- function(data){
   for(i in 1:ncol(data)){
-    if(class(data[,i]) == "factor"){
+    if(class(data[,i]) == "factor" & length(levels(data[,i])) <= 10){
       print(table(data[,i]))
       print("---------------------------")
     }
   }
 }
 
-#CHECK THIS GEAM_BAR
+#CHECK THIS GEOM_BAR
 hist_func_fact <- function(data, list = TRUE){
   for(i in 1:ncol(data)){
     if(class(data[,i]) == "factor"){
@@ -89,9 +88,10 @@ hist_func_fact <- function(data, list = TRUE){
       breaks <- pretty(range(data[,i]), n = nclass.Sturges(data[,i]), min.n = 1)
       bwidth <- breaks[2]-breaks[1]
       df <- data.frame(data[,i])
-      a <- ggplot(df,aes(data[,i]))+geom_bar(binwidth=bwidth,fill="white",colour="black")+
+      
+      a <- ggplot(df,aes(data[,i]))+geom_bar(fill="white",colour="black")+
         labs(title = paste(names(data)[i]))+
-        theme(plot.title = element_text(size = rel(1.5)))
+        theme(plot.title = element_text(size = rel(1.5))) + xlab(paste(levels(data[,i])))
       
       grid.arrange(a, ncol=1)
     }
@@ -140,17 +140,30 @@ split_binaryY <- function(dataY, data, prob, is.same.size = TRUE){
 
 #Imputation for numeric variables only
 impute_numint <- function(data, type = "medianImpute"){
-  preProcValues <- preProcess(data[,sapply(data,is.numeric)], method = c(type))
+  
+  if(type == "knnImpute"){
+    
+    preProcValues <- preProcess(data, method="knnImpute")
+    imp <- data.frame(predict(preProcValues, data))
+    
+    preProcValues1 <- preProcess(data, method = c(type))
+    imp1 <- data.frame(predict(preProcValues, data))
+    return(imp1)
+    
+  }else{
+  
+    preProcValues <- preProcess(data[,sapply(data,is.numeric)], method = c(type))
   # or *bagImpute* / *medianImpute* / knnImpute
   #knnImpute centers and scales all variables
   #bagged trees can also be used to impute. 
   #For each predictor in the data, a bagged tree is created using all of the other predictors in the training set. 
   #When a new sample has a missing predictor value, the bagged model is used to predict the value.
-  imp <- data.frame(predict(preProcValues, data))
+    imp <- data.frame(predict(preProcValues, data))
   
-  preProcValues1 <- preProcess(data[,sapply(imp,is.integer)], method = c(type))
-  imp1 <- data.frame(predict(preProcValues, data))
-  return(imp1)
+    preProcValues1 <- preProcess(data[,sapply(imp,is.integer)], method = c(type))
+    imp1 <- data.frame(predict(preProcValues, data))
+    return(imp1)
+  }
 }
 
 #Imputation
@@ -169,88 +182,36 @@ impute_numint <- function(data, type = "medianImpute"){
 
 #data <- cbind(my_data$House_Price, imp)#get rid of "Observation" column
 
+factor_boxplot <- function(data, dataY, dataX, main = "Y by X", ylab = "Y" , xlab = "X"){
+  
+   plot(ggplot(data,aes(dataX, dataY)) + ylab(ylab) + xlab(xlab) + stat_boxplot(geom ='errorbar')+ geom_boxplot())
 
-
-factor_boxplot <- function(dataY, dataX, t.test = TRUE, main = "Y by X", ylab = "Y", xlab = "X"){
-  boxplot(dataY~dataX,
-          xlab=xlab,ylab=ylab,
-          main=main,col=c("Orange","cornflowerblue","grey"))
-  
-  if(t.test == TRUE){
-  
-    if(length(levels(dataX)) == 2){
-      text(1, 13, paste("P(A = B) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[1],2)),col = "red")
-      text(2, 13, paste("P(B = A) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[1],2)),col = "red")
-    }
-  
-    if(length(levels(dataX)) == 3){
-      text(1, 13, paste("P(A = B) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[1],2)),col = "red")
-    
-      text(2, 13, paste("P(B = C) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[2],2)),col = "red")
-    
-      text(3, 13, paste("P(A = C) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[4],2)),col = "red")
-    }
-  
-    if(length(levels(dataX)) == 4){
-      text(1, 13, paste("P(A = B) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[1],2)),col = "red")
-    
-      text(2, 13, paste("P(B = C) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[2,2],2)),col = "red")
-    
-      text(3, 13, paste("P(C = D) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[3,3],2)),col = "red")
-    
-      text(4, 13, paste("P(D = A) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[3,1],2)),col = "red")
-    }
-  
-    if(length(levels(dataX)) == 5){
-      text(1, 13, paste("P(A = B) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[1],2)),col = "red")
-    
-      text(2, 13, paste("P(B = C) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[2,2],2)),col = "red")
-    
-      text(3, 13, paste("P(C = D) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[3,3],2)),col = "red")
-    
-      text(4, 13, paste("P(D = E) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[3,1],2)),col = "red")
-    
-      text(5, 13, paste("P(E = A) = ",
-                      round(pairwise.t.test(dataY,dataX)$p.value[4,4],2)),col = "red")
-    }
-  }
-  
   return(round(pairwise.t.test(dataY,dataX)$p.value,2))
 }
 
 
-#Correlations
+#Correlations - #cross-table or chi-square test for categorical variables
 corr_num_both <- function(data, n = 5){
   a <- round(cor(data[,sapply(data,is.numeric)], use="complete.obs", method="kendall"), n) 
   b <- round(cor(data[,sapply(data,is.numeric)], use="complete.obs", method="pearson"), n)
-  datalist <- list(a, b)
+  c <- round(cor(data[,sapply(data,is.numeric)], use="complete.obs", method="pearson"), n)
+  datalist <- list(a, b, c)
   
   #See Rcolor pdf
   #Remember to widen your plot screen before exporting
-  corrplot(cor(data[,sapply(data,is.numeric)], use="complete.obs", method="kendall"), method = "number", 
-           col = colorRampPalette(c("red","lightgray","blue"))(100), tl.col = "black", 
-           mar=c(0,0,1,0), title = "Kendall's Tau Correlation", tl.cex=0.8)
+  plot(ggcorrplot(cor(data[,sapply(data,is.numeric)], method = c("pearson")), hc.order = TRUE, type = "lower", 
+             ggtheme = ggplot2::theme_gray, lab = TRUE) + ggtitle("Pearson Linear Correlation"))
   
-  corrplot(cor(data[,sapply(data,is.numeric)], use="complete.obs", method="pearson"), method = "number", 
-           col = colorRampPalette(c("red","lightgray","blue"))(100), tl.col = "black", 
-           mar=c(0,0,1,0), title = "Pearson Correlation", tl.cex=0.8)
+  plot(ggcorrplot(cor(data[,sapply(data,is.numeric)], method = c("kendall")), hc.order = TRUE, type = "lower", 
+             ggtheme = ggplot2::theme_gray, lab = TRUE) + ggtitle("Kendall Rank Correlation"))
   
-  print("First is Kendall's Tau and then Pearson's Linear Correlation")
+       plot(ggcorrplot(cor(data[,sapply(data,is.numeric)], method = c("spearman")), hc.order = TRUE, type = "lower", 
+             ggtheme = ggplot2::theme_gray, lab = TRUE) + ggtitle("Spearman Rank Correlation"))
+  
   return(datalist)
 }
+
+
 
 #PCA
 pca_num <- function(data, ...){
@@ -300,8 +261,14 @@ pca_num2 <- function(data, cumu = TRUE, ...){
   plot(varPlot)#Ylab is Eigenvalues! Xlab is Eigenvectors
   
   par(mfrow = c(1,1))
-  plot(cumsum(pve2), main = "Normalized", xlab="Principal  Component", 
-       ylab="Cumulative  Proportion  of Variance  Explained", ylim=c(0,1),type="b")#Xlab is Eigenvectors
+  a2 <- data.frame(cumsum(pve2), Component = 1:length(pve2))
+  my_plot <- ggplot(a2, aes(y=cumsum.pve2., x=Component)) + geom_line() + geom_point() + coord_cartesian(ylim = c(0,1))+
+    ylab("Cumulative  Proportion  of Variance  Explained")
+  plot(my_plot)
+  
+  #par(mfrow = c(1,1))
+  #plot(cumsum(pve2), main = "Normalized", xlab="Principal  Component", 
+  #       ylab="Cumulative  Proportion  of Variance  Explained", ylim=c(0,1),type="b")#Xlab is Eigenvectors
   
   
   PCbiplot <- function(PC, x="PC1", y="PC2", mm) {
