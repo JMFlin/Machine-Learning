@@ -1,0 +1,104 @@
+---
+title: "Machine Learning with Activity Monitoring Data"
+author: "JMFlin"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Summary
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+<br>
+```{r, message=FALSE}
+library(ggplot2)
+library(caret)
+library(reshape2)
+```
+
+```{r}
+training <- read.csv("training.csv", na.string = c("NA","Na", "NaN", "", " ", "#DIV/0!"))
+validation <- read.csv("validation.csv", na.string = c("NA","Na", "NaN", "", " ", "#DIV/0!"))
+```
+<br>
+Remove those columns that have 70% of their values missing. Check for zero and near zero variance predictors and remove highly correlated predictors.
+<br>
+```{r}
+train <- training[, -which(colMeans(is.na(training)) > 0.7)]
+train <- train[,8:ncol(train)]
+
+nearZeroVar(train, saveMetrics = TRUE)
+
+it <- findCorrelation(cor(train[,1:(ncol(train)-1)]), .70) 
+train <- train[, -it]
+```
+<br>
+Do some visual checking of the data. We can see from gyros_forearm_x that there is an outlier in the data. This outlier is in the row numbered 5373. I will remove it from the data.
+<br>
+```{r}
+temp <- train
+temp <- temp[,1:16]
+temp <- cbind(temp, classe = train[,"classe"])
+longtemp <- melt(temp, measure.vars = (1:ncol(temp)-1))
+ggplot(longtemp, aes(x=classe, y=value))+
+  xlab("")+
+  ylab("")+
+  stat_boxplot(geom ='errorbar')+ 
+  geom_boxplot() +
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text(), legend.key = element_rect(colour = "black"))+
+  facet_wrap(~ variable, ncol = 4, scales = "free")
+
+temp <- train
+temp <- temp[,17:ncol(train)]
+longtemp <- melt(temp, measure.vars = (1:ncol(temp)-1))
+ggplot(longtemp, aes(x=classe, y=value))+
+  xlab("")+
+  ylab("")+
+  stat_boxplot(geom ='errorbar')+ 
+  geom_boxplot() +
+  theme(axis.line = element_line(), axis.text=element_text(color='black'), axis.title = element_text(colour = 'black'), legend.text=element_text(), legend.title=element_text(), legend.key = element_rect(colour = "black"))+
+  facet_wrap(~ variable, ncol = 4, scales = "free")
+
+row.names(train[train$gyros_forearm_x < -10,])
+train <- train[-as.numeric(row.names(train[train$gyros_forearm_x < -10,])),]
+```
+<br>
+Split the data and build a random forest model.
+<br>
+```{r, message=FALSE}
+validation <- validation[,names(validation) %in% names(train)]
+
+index <- createDataPartition(y=train$classe, p=0.7, list=FALSE)
+train_split <- train[index, ]
+train_test_split <- train[-index, ]
+
+ctrl <- trainControl(method = "cv",
+                     number = 5)
+
+set.seed(1234)
+
+rf_mod <- train(classe ~ ., 
+                data = train_split,
+                method = "rf",
+                ntree = 250,
+                trControl = ctrl)
+
+rfClasses <- predict(rf_mod, train_test_split)
+```
+<br>
+Check the accuracy of the model.
+<br>
+```{r}
+confusionMatrix(data = rfClasses, train_test_split$classe)
+```
+<br>
+Predict the new classes.
+<br>
+```{r}
+result <- predict(rf_mod, validation)
+result
+```
