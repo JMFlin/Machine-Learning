@@ -8,11 +8,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Background
+## Summary
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
-## Summary
-The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+As described in the website, six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+The goal of this project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. 
  
 ```{r, message=FALSE}
 library(ggplot2)
@@ -29,11 +30,13 @@ Remove those columns that have 70% of their values missing. Check for zero and n
  
 ```{r}
 train <- training[, -which(colMeans(is.na(training)) > 0.7)]
-train <- train[,8:ncol(train)]
+
+train <- train[, !grepl("^X|timestamp|window", names(train))]
 
 nearZeroVar(train, saveMetrics = TRUE)
 
-it <- findCorrelation(cor(train[,1:(ncol(train)-1)]), .70) 
+it <- findCorrelation(cor(train[,2:(ncol(train)-1)]), .70) 
+it <- it+1
 train <- train[, -it]
 ```
  
@@ -41,7 +44,7 @@ Do some visual checking of the data. We can see from gyros_forearm_x that there 
  
 ```{r}
 temp <- train
-temp <- temp[,1:16]
+temp <- temp[,2:17]
 temp <- cbind(temp, classe = train[,"classe"])
 longtemp <- melt(temp, measure.vars = (1:ncol(temp)-1))
 ggplot(longtemp, aes(x=classe, y=value))+
@@ -53,7 +56,7 @@ ggplot(longtemp, aes(x=classe, y=value))+
   facet_wrap(~ variable, ncol = 4, scales = "free")
 
 temp <- train
-temp <- temp[,17:ncol(train)]
+temp <- temp[,18:ncol(train)]
 longtemp <- melt(temp, measure.vars = (1:ncol(temp)-1))
 ggplot(longtemp, aes(x=classe, y=value))+
   xlab("")+
@@ -67,7 +70,9 @@ row.names(train[train$gyros_forearm_x < -10,])
 train <- train[-as.numeric(row.names(train[train$gyros_forearm_x < -10,])),]
 ```
  
-Split the data and build a random forest model.
+
+
+First we split the data into training and testing sets. Then we set the seed so that the analysis can be reproduced exactly. Then we use the train function to set up 5-fold cross validation and train a random forest algorithm on the training data using 250 trees.
  
 ```{r, message=FALSE}
 validation <- validation[,names(validation) %in% names(train)]
@@ -90,13 +95,13 @@ rf_mod <- train(classe ~ .,
 rfClasses <- predict(rf_mod, train_test_split)
 ```
 
-Check the accuracy of the model.
+The accuracy of the model is about 0.99. We can be fairly confident that we will predict the class of all 20 observations with perfectly.
  
 ```{r}
 confusionMatrix(data = rfClasses, train_test_split$classe)
 ```
  
-Predict the new classes.
+The predicted classes of these 20 unknown observations are shown here:
  
 ```{r}
 result <- predict(rf_mod, validation)
